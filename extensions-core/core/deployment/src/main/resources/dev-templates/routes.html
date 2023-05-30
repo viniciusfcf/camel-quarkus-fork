@@ -1,0 +1,38 @@
+{#include main}
+{#style}
+.clearCacheIcon:hover {
+    color: #3366ac !important;
+    cursor: pointer;
+}
+.refreshCacheIcon:hover {
+    color: #3366ac !important;
+    cursor: pointer;
+}
+{/style}
+
+{#script}
+
+{/script}
+{#title}Routes{/title}
+{#body}
+<table class="table table-striped">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">URI</th>
+    </tr>
+    </thead>
+    <tbody>
+    {#for routeInfo in info:routeInfos}
+    <tr id="tr-{routeInfo.routeId}">
+        <td>
+            {routeInfo.routeId}
+        </td>
+        <td>
+            <span id="size-{routeInfo.routeId}">{routeInfo.routeId}</span>
+        </td>
+    {/for}
+    </tbody>
+</table>
+{/body}
+{/include}
