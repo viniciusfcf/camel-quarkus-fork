@@ -15,6 +15,6 @@
  * limitations under the License.
  */
 
-from('direct:start')
+from('direct:jsHello')
     .id('my-js-route')
-    .log('Hello JavaScript !!!')
+    .setBody().simple('Hello ${body} from JavaScript!')

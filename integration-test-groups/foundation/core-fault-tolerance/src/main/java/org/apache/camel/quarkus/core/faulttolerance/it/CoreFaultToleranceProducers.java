@@ -18,29 +18,31 @@ package org.apache.camel.quarkus.core.faulttolerance.it;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Named;
+import java.util.concurrent.TimeUnit;
 
 import io.smallrye.faulttolerance.core.FaultToleranceStrategy;
 import io.smallrye.faulttolerance.core.InvocationContext;
 import io.smallrye.faulttolerance.core.circuit.breaker.CircuitBreaker;
 import io.smallrye.faulttolerance.core.stopwatch.SystemStopwatch;
+import io.smallrye.faulttolerance.core.timer.ThreadTimer;
 import io.smallrye.faulttolerance.core.util.ExceptionDecision;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Disposes;
+import jakarta.inject.Named;
 
 public class CoreFaultToleranceProducers {
 
     @ApplicationScoped
     @Named("customCircuitBreaker")
-    CircuitBreaker<Integer> produceCustomCircuitBreaker() {
+    CircuitBreaker<Integer> produceCustomCircuitBreaker(ThreadTimer threadTimer) {
         FaultToleranceStrategy<Integer> delegate = new FaultToleranceStrategy<Integer>() {
             @Override
             public Integer apply(InvocationContext<Integer> ctx) {
                 return null;
             }
         };
-        return new CircuitBreaker<Integer>(delegate, "description", ExceptionDecision.ALWAYS_FAILURE, 10, 40, 0.1,
-                2, new SystemStopwatch()) {
+        return new CircuitBreaker<>(delegate, "description", ExceptionDecision.ALWAYS_FAILURE, 10, 40, 0.1,
+                2, SystemStopwatch.INSTANCE, threadTimer) {
             @Override
             public String toString() {
                 return "customCircuitBreaker";
@@ -54,4 +56,30 @@ public class CoreFaultToleranceProducers {
         return Executors.newFixedThreadPool(2);
     }
 
+    @ApplicationScoped
+    @Named("threadTimer")
+    ThreadTimer threadTimer(@Named("threadTimerExecutor") ExecutorService executorService) {
+        return new ThreadTimer(executorService);
+    }
+
+    @ApplicationScoped
+    @Named("threadTimerExecutor")
+    ExecutorService threadTimerExecutor() {
+        return Executors.newSingleThreadExecutor();
+    }
+
+    void disposeThreadTimerExecutor(@Disposes @Named("threadTimerExecutor") ExecutorService threadTimerExecutor,
+            ThreadTimer timer) {
+        try {
+            timer.shutdown();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        try {
+            threadTimerExecutor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 }

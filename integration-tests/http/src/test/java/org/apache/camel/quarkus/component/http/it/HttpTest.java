@@ -21,7 +21,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.eclipse.microprofile.config.ConfigProvider;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -34,6 +33,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 @QuarkusTest
 @QuarkusTestResource(HttpTestResource.class)
@@ -198,18 +198,6 @@ class HttpTest {
     }
 
     @Test
-    public void serviceCall() {
-        RestAssured
-                .given()
-                .port(getPort())
-                .when()
-                .get("/test/server/serviceCall")
-                .then()
-                .statusCode(200)
-                .body(Matchers.is("Hello from myService"));
-    }
-
-    @Test
     public void httpOperationFailedException() {
         RestAssured
                 .given()
@@ -218,6 +206,72 @@ class HttpTest {
                 .then()
                 .statusCode(200)
                 .body(is("Handled HttpOperationFailedException"));
+    }
+
+    @Test
+    public void vertxHttpMultipartFormParamsShouldSucceed() {
+        RestAssured
+                .given()
+                .queryParam("test-port", RestAssured.port)
+                .queryParam("organization", "Apache")
+                .queryParam("project", "Camel")
+                .when()
+                .get("/test/client/vertx-http/multipart-form-params")
+                .then()
+                .statusCode(200)
+                .body(is("multipartFormParams(Apache, Camel)"));
+    }
+
+    @Test
+    public void vertxHttpMultipartFormDataShouldSucceed() {
+        RestAssured
+                .given()
+                .queryParam("test-port", RestAssured.port)
+                .when()
+                .get("/test/client/vertx-http/multipart-form-data")
+                .then()
+                .statusCode(200)
+                .body(is("multipartFormData(part1=content1, <part2 value=\"content2\"/>)"));
+    }
+
+    @Test
+    public void vertxHttpCustomVertxOptionsShouldSucceed() {
+        RestAssured
+                .given()
+                .queryParam("test-port", RestAssured.port)
+                .when()
+                .get("/test/client/vertx-http/custom-vertx-options")
+                .then()
+                .statusCode(200)
+                .body(is("OK: the custom vertxOptions has triggered the expected exception"));
+    }
+
+    @Test
+    public void vertxHttpSessionManagementShouldReturnSecretContent() {
+        RestAssured
+                .given()
+                .queryParam("test-port", RestAssured.port)
+                .when()
+                .get("/test/client/vertx-http/session-management")
+                .then()
+                .statusCode(200)
+                .body(is("Some secret content"));
+    }
+
+    @Test
+    public void vertxHttpBufferConversionWithCharset() {
+        byte[] actualBytes = RestAssured
+                .given()
+                .queryParam("string", "special char €")
+                .queryParam("charset", "iso-8859-15")
+                .when()
+                .get("/test/client/vertx-http/buffer-conversion-with-charset")
+                .then()
+                .statusCode(200)
+                .extract().asByteArray();
+
+        byte[] expectedBytes = new byte[] { 115, 112, 101, 99, 105, 97, 108, 32, 99, 104, 97, 114, 32, -92 };
+        assertArrayEquals(expectedBytes, actualBytes);
     }
 
     private Integer getPort() {

@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -35,7 +35,6 @@
     <modules>
         <module>asn1</module>
         <module>asterisk</module>
-        <module>atmos</module>
         <module>aws-secrets-manager</module>
         <module>aws-xray</module>
         <module>azure-cosmosdb</module>
@@ -46,10 +45,11 @@
         <module>bonita</module>
         <module>chatscript</module>
         <module>chunk</module>
+        <module>cli-connector</module>
         <module>cm-sms</module>
-        <module>cmis</module>
         <module>coap</module>
         <module>cometd</module>
+        <module>console</module>
         <module>controlbus-statistics</module>
         <module>corda</module>
         <module>couchbase</module>
@@ -59,43 +59,33 @@
         <module>drill</module>
         <module>dsl-modeline</module>
         <module>ehcache</module>
+        <module>elasticsearch</module>
         <module>etcd3</module>
         <module>facebook</module>
         <module>fastjson</module>
         <module>flink</module>
         <module>google-functions</module>
         <module>google-secret-manager</module>
-        <module>groovy</module>
-        <module>groovy-dsl</module>
         <module>guava-eventbus</module>
         <module>hashicorp-vault</module>
-        <module>hbase</module>
         <module>hdfs</module>
         <module>huaweicloud-smn</module>
         <module>iec60870</module>
         <module>ignite</module>
-        <module>iota</module>
         <module>irc</module>
         <module>jasypt</module>
-        <module>java-joor-dsl</module>
-        <module>jbpm</module>
-        <module>jclouds</module>
         <module>jcr</module>
         <module>jgroups</module>
         <module>jgroups-raft</module>
         <module>jooq</module>
-        <module>joor</module>
         <module>json-patch</module>
         <module>jsonapi</module>
         <module>jt400</module>
-        <module>kotlin-dsl</module>
-        <module>ldap</module>
         <module>ldif</module>
         <module>lucene</module>
         <module>management</module>
-        <module>milo</module>
+        <module>mapstruct</module>
         <module>mvel</module>
-        <module>ognl</module>
         <module>printer</module>
         <module>pulsar</module>
         <module>quickfix</module>
@@ -113,6 +103,7 @@
         <module>wordpress</module>
         <module>workday</module>
         <module>xj</module>
+        <module>xml-grouped</module>
         <module>xmpp</module>
         <module>xslt-saxon</module>
         <module>zookeeper</module>

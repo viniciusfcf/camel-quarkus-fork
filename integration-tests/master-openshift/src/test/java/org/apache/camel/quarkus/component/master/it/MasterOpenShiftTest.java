@@ -76,11 +76,8 @@ class MasterOpenShiftTest {
 
         // Start secondary application process faking KubernetesClusterService so it assumes being run from a pod named follower
         Consumer<ProcessExecutor> customizer = pe -> pe.environment("HOSTNAME", "follower");
-        QuarkusProcessExecutor quarkusProcessExecutor = new QuarkusProcessExecutor(customizer, jvmArgs.toArray(String[]::new));
-        StartedProcess process = quarkusProcessExecutor.start();
-
-        // Wait until the process is fully initialized
-        awaitStartup(quarkusProcessExecutor);
+        QuarkusProcessExecutor followerProcessExecutor = new QuarkusProcessExecutor(customizer, jvmArgs.toArray(String[]::new));
+        StartedProcess followerProcess = null;
 
         try {
             // Verify that this process is the cluster leader
@@ -88,7 +85,11 @@ class MasterOpenShiftTest {
                 return readLeaderFile("leader").equals("leader");
             });
 
-            // Verify the follower hasn't took leader role
+            // Start the follower process and wait until fully initialized
+            followerProcess = followerProcessExecutor.start();
+            awaitStartup(followerProcessExecutor);
+
+            // Verify the follower hasn't took leader role yet
             assertThat(readLeaderFile("follower"), emptyString());
 
             // Stop camel and delete the lease mock to trigger fail-over
@@ -101,8 +102,8 @@ class MasterOpenShiftTest {
                 return readLeaderFile("follower").equals("leader");
             });
         } finally {
-            if (process != null && process.getProcess().isAlive()) {
-                process.getProcess().destroy();
+            if (followerProcess != null && followerProcess.getProcess().isAlive()) {
+                followerProcess.getProcess().destroy();
             }
         }
     }

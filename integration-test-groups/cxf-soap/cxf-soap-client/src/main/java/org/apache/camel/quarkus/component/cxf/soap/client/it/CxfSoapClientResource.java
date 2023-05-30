@@ -16,21 +16,24 @@
  */
 package org.apache.camel.quarkus.component.cxf.soap.client.it;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.apache.camel.CamelExecutionException;
 import org.apache.camel.ProducerTemplate;
+import org.apache.camel.component.cxf.common.message.CxfConstants;
 import org.jboss.eap.quickstarts.wscalculator.calculator.Operands;
 import org.jboss.eap.quickstarts.wscalculator.calculator.Result;
 
@@ -45,14 +48,28 @@ public class CxfSoapClientResource {
     @POST
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.TEXT_PLAIN)
-    public Response sendSimpleRequest(@QueryParam("a") int a,
-            @QueryParam("b") int b, @QueryParam("endpointUri") String endpointUri) throws Exception {
-        final String response = producerTemplate.requestBody(String.format("direct:%s", endpointUri), new int[] { a, b },
-                String.class);
-        return Response
-                .created(new URI("https://camel.apache.org/"))
-                .entity(response)
-                .build();
+    public Response sendSimpleRequest(
+            @QueryParam("a") int a,
+            @QueryParam("b") int b,
+            @QueryParam("endpointUri") String endpointUri,
+            @QueryParam("operation") String operation) throws Exception {
+        try {
+            final String response = producerTemplate.requestBodyAndHeader(
+                    String.format("direct:%s", endpointUri),
+                    new int[] { a, b },
+                    CxfConstants.OPERATION_NAME,
+                    operation,
+                    String.class);
+            return Response
+                    .created(new URI("https://camel.apache.org/"))
+                    .entity(response)
+                    .build();
+        } catch (CamelExecutionException e) {
+            try (StringWriter stackTrace = new StringWriter(); PrintWriter out = new PrintWriter(stackTrace)) {
+                e.printStackTrace(out);
+                return Response.serverError().entity(stackTrace.toString()).build();
+            }
+        }
     }
 
     @Path("/simpleAddDataFormat")

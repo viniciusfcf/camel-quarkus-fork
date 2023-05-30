@@ -44,10 +44,7 @@ class XalanNativeImageProcessor {
 
     @BuildStep
     ReflectiveClassBuildItem reflectiveClasses() {
-        return new ReflectiveClassBuildItem(
-                true,
-                false,
-                "org.apache.camel.quarkus.support.xalan.XalanTransformerFactory",
+        return ReflectiveClassBuildItem.builder("org.apache.camel.quarkus.support.xalan.XalanTransformerFactory",
                 "org.apache.xalan.xsltc.dom.ObjectFactory",
                 "org.apache.xalan.xsltc.dom.XSLTCDTMManager",
                 "org.apache.xalan.xsltc.trax.ObjectFactory",
@@ -56,7 +53,7 @@ class XalanNativeImageProcessor {
                 "org.apache.xml.dtm.ref.DTMManagerDefault",
                 "org.apache.xml.serializer.OutputPropertiesFactory",
                 "org.apache.xml.serializer.CharInfo",
-                "org.apache.xml.serializer.XMLEntities");
+                "org.apache.xml.utils.FastStringBuffer").methods().build();
     }
 
     @BuildStep
@@ -64,7 +61,8 @@ class XalanNativeImageProcessor {
         return Arrays.asList(
                 new NativeImageResourceBundleBuildItem("org.apache.xalan.xsltc.compiler.util.ErrorMessages"),
                 new NativeImageResourceBundleBuildItem("org.apache.xml.serializer.utils.SerializerMessages"),
-                new NativeImageResourceBundleBuildItem("org.apache.xml.serializer.XMLEntities"));
+                new NativeImageResourceBundleBuildItem("org.apache.xml.serializer.XMLEntities"),
+                new NativeImageResourceBundleBuildItem("org.apache.xml.res.XMLErrorResources"));
     }
 
     @BuildStep

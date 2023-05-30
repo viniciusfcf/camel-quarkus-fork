@@ -20,25 +20,25 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Queue;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.component.aws2.kinesis.Kinesis2Constants;
+import org.apache.camel.quarkus.test.support.aws2.BaseAws2Resource;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 @Path("/aws2-kinesis")
 @ApplicationScoped
-public class Aws2KinesisResource {
+public class Aws2KinesisResource extends BaseAws2Resource {
 
     private static final Logger log = Logger.getLogger(Aws2KinesisResource.class);
 
@@ -51,6 +51,10 @@ public class Aws2KinesisResource {
     @Inject
     @Named("aws2KinesisMessages")
     Queue<String> aws2KinesisMessages;
+
+    public Aws2KinesisResource() {
+        super("kinesis");
+    }
 
     @Path("/send")
     @POST
@@ -77,7 +81,7 @@ public class Aws2KinesisResource {
     }
 
     private String componentUri() {
-        return "aws2-kinesis://" + streamName;
+        return "aws2-kinesis://" + streamName + "?useDefaultCredentialsProvider=" + isUseDefaultCredentials();
     }
 
 }

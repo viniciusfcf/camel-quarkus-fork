@@ -21,21 +21,21 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.SessionScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPMessage;
-
 import com.sun.xml.messaging.saaj.soap.ver1_1.Message1_1Impl;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.xml.soap.MessageFactory;
+import jakarta.xml.soap.SOAPMessage;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.cxf.common.DataFormat;
 import org.apache.camel.component.cxf.common.message.CxfConstants;
 import org.apache.camel.component.cxf.jaxws.CxfEndpoint;
 import org.apache.cxf.ext.logging.LoggingFeature;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.eap.quickstarts.wscalculator.basicauthcalculator.BasicAuthCalculatorService;
 import org.jboss.eap.quickstarts.wscalculator.calculator.CalculatorService;
 
 @ApplicationScoped
@@ -90,6 +90,13 @@ public class CxfSoapClientRoutes extends RouteBuilder {
         from("direct:operandsAdd")
                 .setHeader(CxfConstants.OPERATION_NAME).constant("addOperands")
                 .to("cxf:bean:soapClientEndpoint?dataFormat=POJO");
+
+        from("direct:basicAuthAdd")
+                .to("cxf:bean:basicAuthClientEndpoint?dataFormat=POJO&username={{cq.cxf.it.calculator.auth.basic.user}}&password={{cq.cxf.it.calculator.auth.basic.password}}");
+
+        from("direct:basicAuthAddAnonymous")
+                .to("cxf:bean:basicAuthClientEndpoint?dataFormat=POJO");
+
     }
 
     @Produces
@@ -109,6 +116,18 @@ public class CxfSoapClientRoutes extends RouteBuilder {
         result.setServiceClass(CalculatorService.class);
         result.setAddress(calculatorServiceAddress());
         result.setWsdlURL(calculatorServiceWsdlUrl());
+        result.getFeatures().add(loggingFeature);
+        return result;
+    }
+
+    @Produces
+    @SessionScoped
+    @Named
+    CxfEndpoint basicAuthClientEndpoint() {
+        final CxfEndpoint result = new CxfEndpoint();
+        result.setServiceClass(BasicAuthCalculatorService.class);
+        result.setAddress(serviceBaseUri + "/calculator-ws/BasicAuthCalculatorService");
+        result.setWsdlURL("wsdl/BasicAuthCalculatorService.wsdl");
         result.getFeatures().add(loggingFeature);
         return result;
     }

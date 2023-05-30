@@ -16,8 +16,7 @@
  */
 package org.apache.camel.quarkus.component.cxf.soap.securitypolicy.server.it;
 
-import javax.jws.WebService;
-
+import jakarta.jws.WebService;
 import org.apache.cxf.annotations.EndpointProperties;
 import org.apache.cxf.annotations.EndpointProperty;
 import org.apache.cxf.annotations.Policy;

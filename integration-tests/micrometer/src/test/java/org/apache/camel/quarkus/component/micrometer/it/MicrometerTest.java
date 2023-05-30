@@ -18,6 +18,7 @@ package org.apache.camel.quarkus.component.micrometer.it;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
+import io.restassured.response.ResponseBodyExtractionOptions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,8 +56,9 @@ class MicrometerTest {
         RestAssured.get("/micrometer/timer")
                 .then()
                 .statusCode(200);
-        assertTrue(getMetricValue(Integer.class, "counter", "CamelExchangesSucceeded", "routeId=micrometer-metrics-timer") > 0);
-        assertEquals(0, getMetricValue(Integer.class, "counter", "CamelExchangesFailed", "routeId=micrometer-metrics-timer"));
+        assertTrue(
+                getMetricValue(Integer.class, "counter", "camel.exchanges.succeeded", "routeId=micrometer-metrics-timer") > 0);
+        assertEquals(0, getMetricValue(Integer.class, "counter", "camel.exchanges.failed", "routeId=micrometer-metrics-timer"));
     }
 
     @Test
@@ -65,13 +67,13 @@ class MicrometerTest {
                 .then()
                 .statusCode(200);
         String tags = "nodeId=log1,routeId=log";
-        assertTrue(getMetricValue(Double.class, "timer", "CamelMessageHistory", tags) > 0.0);
+        assertTrue(getMetricValue(Double.class, "timer", "camel.message.history", tags) > 0.0);
     }
 
     @Test
     public void testMicrometerRouteEventNotifier() {
-        assertTrue(getMetricValue(Integer.class, "gauge", "CamelRoutesAdded") >= 4);
-        assertTrue(getMetricValue(Integer.class, "gauge", "CamelRoutesRunning") >= 4);
+        assertTrue(getMetricValue(Integer.class, "gauge", "camel.routes.added") >= 4);
+        assertTrue(getMetricValue(Integer.class, "gauge", "camel.routes.running") >= 4);
     }
 
     @Test
@@ -80,7 +82,30 @@ class MicrometerTest {
                 .then()
                 .statusCode(200);
         String tags = "endpointName=direct://log,eventType=ExchangeSentEvent";
-        assertTrue(getMetricValue(Double.class, "timer", "CamelExchangeEventNotifier", tags) >= 0.0);
+        assertTrue(getMetricValue(Double.class, "timer", "camel.exchange.event.notifier", tags) >= 0.0);
+    }
+
+    @Test
+    public void testAnnotations() {
+        RestAssured.get("/micrometer/annotations/call/1")
+                .then()
+                .statusCode(200);
+        RestAssured.get("/micrometer/annotations/call/1")
+                .then()
+                .statusCode(200);
+
+        assertEquals(2, getMetricValue(Double.class, "counter", "TestMetric.counted1", ""));
+        assertTrue(getMetricValue(Double.class, "timer", "TestMetric.timed1", "") >= 2000);
+    }
+
+    @Test
+    public void testQuarkusMetricsApi() {
+        RestAssured.get("/micrometer/annotations/call/2")
+                .then()
+                .statusCode(200);
+
+        assertEquals("Metric does not exist", getMetricValue(String.class, "counter", "TestMetric_wrong.counted", "", 500));
+        assertEquals(1, getMetricValue(Double.class, "counter", "TestMetric.counted2", ""));
     }
 
     private <T> T getMetricValue(Class<T> as, String type, String name) {
@@ -88,15 +113,24 @@ class MicrometerTest {
     }
 
     private <T> T getMetricValue(Class<T> as, String type, String name, String tags) {
-        return RestAssured.given()
+        return getMetricValue(as, type, name, tags, 200);
+    }
+
+    private <T> T getMetricValue(Class<T> as, String type, String name, String tags, int statusCode) {
+        ResponseBodyExtractionOptions resp = RestAssured.given()
                 .queryParam("tags", tags)
                 .when()
                 .get("/micrometer/metric/" + type + "/" + name)
                 .then()
-                .statusCode(200)
+                .statusCode(statusCode)
                 .extract()
-                .body()
-                .as(as);
+                .body();
+
+        if (as.equals(String.class)) {
+            return (T) resp.asString();
+        }
+
+        return resp.as(as);
     }
 
     /**

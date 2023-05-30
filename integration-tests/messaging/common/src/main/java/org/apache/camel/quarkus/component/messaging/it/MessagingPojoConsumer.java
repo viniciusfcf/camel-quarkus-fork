@@ -20,22 +20,21 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.camel.Consume;
 import org.apache.camel.quarkus.component.messaging.it.util.scheme.ComponentScheme;
 
 @Singleton
 public class MessagingPojoConsumer {
 
-    private static BlockingQueue<String> messages = new LinkedBlockingQueue<>();
+    private static final BlockingQueue<String> messages = new LinkedBlockingQueue<>();
 
     @Inject
     ComponentScheme scheme;
 
     public String getMessagingUri() {
-        return scheme + ":queue:pojoConsume";
+        return scheme + ":queue:testJmsPojoConsumer";
     }
 
     @Consume(property = "messagingUri")

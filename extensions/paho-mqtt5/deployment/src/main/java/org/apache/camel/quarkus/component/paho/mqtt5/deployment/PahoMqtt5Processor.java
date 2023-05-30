@@ -46,13 +46,13 @@ class PahoMqtt5Processor {
 
     @BuildStep
     void registerReflectiveClasses(BuildProducer<ReflectiveClassBuildItem> p) {
-        p.produce(new ReflectiveClassBuildItem(false, false, JSR47Logger.class));
-        p.produce(new ReflectiveClassBuildItem(false, false, ResourceBundleCatalog.class));
-        p.produce(new ReflectiveClassBuildItem(false, false, ResourceBundle.class));
-        p.produce(new ReflectiveClassBuildItem(false, false, FileLock.class));
-        p.produce(new ReflectiveClassBuildItem(true, false, FileChannel.class));
-        p.produce(new ReflectiveClassBuildItem(true, false, RandomAccessFile.class));
-        p.produce(new ReflectiveClassBuildItem(true, false, "sun.nio.ch.FileLockImpl"));
+        p.produce(ReflectiveClassBuildItem.builder(JSR47Logger.class).build());
+        p.produce(ReflectiveClassBuildItem.builder(ResourceBundleCatalog.class).build());
+        p.produce(ReflectiveClassBuildItem.builder(ResourceBundle.class).build());
+        p.produce(ReflectiveClassBuildItem.builder(FileLock.class).build());
+        p.produce(ReflectiveClassBuildItem.builder(FileChannel.class).methods().build());
+        p.produce(ReflectiveClassBuildItem.builder(RandomAccessFile.class).methods().build());
+        p.produce(ReflectiveClassBuildItem.builder("sun.nio.ch.FileLockImpl").methods().build());
     }
 
     @BuildStep

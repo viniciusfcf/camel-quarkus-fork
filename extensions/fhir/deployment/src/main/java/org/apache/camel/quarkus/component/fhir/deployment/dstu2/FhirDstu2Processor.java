@@ -19,8 +19,6 @@ package org.apache.camel.quarkus.component.fhir.deployment.dstu2;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.inject.Singleton;
-
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.dstu2.resource.BaseResource;
 import io.quarkus.arc.deployment.SyntheticBeanBuildItem;
@@ -31,6 +29,7 @@ import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import jakarta.inject.Singleton;
 import org.apache.camel.quarkus.component.fhir.FhirContextRecorder;
 import org.apache.camel.quarkus.component.fhir.FhirFlags;
 
@@ -73,7 +72,8 @@ public class FhirDstu2Processor {
         classes.add(BaseResource.class.getCanonicalName());
         classes.addAll(getModelClasses(propertiesBuildItem.getProperties()));
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, classes.toArray(new String[0])));
+        reflectiveClass
+                .produce(ReflectiveClassBuildItem.builder(classes.toArray(new String[0])).build());
 
         String[] dstu2Enums = combinedIndex.getIndex()
                 .getKnownClasses()
@@ -82,6 +82,6 @@ public class FhirDstu2Processor {
                 .filter(className -> className.startsWith("ca.uhn.fhir.model.dstu2.valueset"))
                 .toArray(String[]::new);
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, dstu2Enums));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(dstu2Enums).build());
     }
 }

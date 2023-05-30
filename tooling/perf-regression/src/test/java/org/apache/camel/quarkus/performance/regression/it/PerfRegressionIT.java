@@ -17,6 +17,9 @@
 package org.apache.camel.quarkus.performance.regression.it;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
@@ -52,6 +55,7 @@ public class PerfRegressionIT {
             assertThat(processOutput, containsString("-cqs, --camel-quarkus-staging-repository=<cqStagingRepository>"));
             assertThat(processOutput, containsString("-cs, --camel-staging-repository=<camelStagingRepository>"));
             assertThat(processOutput, containsString("-d, --duration=<singleScenarioDuration>"));
+            assertThat(processOutput, containsString("-umnb, --use-mandrel-native-builder"));
         } catch (InvalidExitValueException ievex) {
             fail("The perf-regression process has finished with an unexpected exit value", ievex);
         }
@@ -75,8 +79,17 @@ public class PerfRegressionIT {
         try {
             String cqVersion = System.getProperty("camel.quarkus.version");
 
+            String javaCommand = "java";
+            String javaHome = System.getProperty("java.home");
+            if (javaHome != null) {
+                Path javaExecutablePath = Paths.get(javaHome, "bin", "java");
+                if (Files.exists(javaExecutablePath)) {
+                    javaCommand = javaExecutablePath.toString();
+                }
+            }
+
             String processOutput = new ProcessExecutor()
-                    .command("java", "-jar", "target/quarkus-app/quarkus-run.jar", "-d", "1s", cqVersion)
+                    .command(javaCommand, "-jar", "target/quarkus-app/quarkus-run.jar", "-d", "1s", cqVersion)
                     .environment("LANG", locale + ".UTF-8")
                     .readOutput(true)
                     .exitValue(0)

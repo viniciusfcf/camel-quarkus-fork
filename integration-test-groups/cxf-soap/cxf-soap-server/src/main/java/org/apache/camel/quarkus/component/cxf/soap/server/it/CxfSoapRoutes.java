@@ -20,19 +20,18 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPMessage;
 import javax.xml.xpath.XPathConstants;
 
 import org.w3c.dom.Element;
 
-import com.helloworld.service.CodeFirstService;
 import com.helloworld.service.HelloPortType;
 import com.sun.xml.messaging.saaj.soap.ver1_1.Message1_1Impl;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.xml.soap.MessageFactory;
+import jakarta.xml.soap.SOAPMessage;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.cxf.common.DataFormat;
 import org.apache.camel.component.cxf.jaxws.CxfEndpoint;
@@ -64,10 +63,20 @@ public class CxfSoapRoutes extends RouteBuilder {
 
         from(String.format("cxf:///hello-uri-address?wsdlURL=wsdl/HelloService.wsdl&serviceClass=%s",
                 HelloPortType.class.getName()))
-                        .setBody().simple("Hello ${body} from CXF service");
+                .setBody().simple("Hello ${body} from CXF service");
 
         from("cxf:bean:codeFirstServiceEndpoint")
-                .setBody().constant("Hello CamelQuarkusCXF");
+                .choice()
+                .when(simple("${header.operationName} == 'Hello'"))
+                .setBody().simple("Hello ${body} code first")
+                .endChoice()
+                .when(simple("${header.operationName} == 'GoodBye'"))
+                .setBody().simple("Good bye ${body} code first")
+                .endChoice()
+                .otherwise()
+                .process(e -> {
+                    throw new IllegalStateException("Unexpected operation " + e.getMessage().getHeader("operationName"));
+                });
 
         from("cxf:bean:echoServiceResponseFromRouteCxfMessageDataFormat")
                 .process(exchange -> {
@@ -92,10 +101,12 @@ public class CxfSoapRoutes extends RouteBuilder {
                     exchange.getIn().setBody(String.format(response, requestMsg + " from Camel route"));
                 });
 
-        from("cxf:bean:echoServiceResponseFromRoute")
+        from(String.format("cxf:echoServiceResponseFromRoute?serviceClass=%s&address=/echo-route",
+                EchoServiceImpl.class.getName()))
                 .setBody(exchange -> exchange.getMessage().getBody(String.class) + " from Camel route");
 
-        from("cxf:bean:echoServiceResponseFromImpl")// no body set here; the response comes from EchoServiceImpl
+        from(String.format("cxf:echoServiceResponseFromImpl?serviceClass=%s&address=/echo-impl",
+                EchoServiceImpl.class.getName()))// no body set here; the response comes from EchoServiceImpl
                 .log("${body}");
 
     }
@@ -152,28 +163,6 @@ public class CxfSoapRoutes extends RouteBuilder {
         result.setServiceClass(EchoServiceImpl.class);
         result.setAddress("/echo-route-cxf-message-data-format");
         result.setDataFormat(DataFormat.CXF_MESSAGE);
-        result.getFeatures().add(loggingFeature);
-        return result;
-    }
-
-    @Produces
-    @ApplicationScoped
-    @Named
-    CxfEndpoint echoServiceResponseFromRoute() {
-        final CxfEndpoint result = new CxfEndpoint();
-        result.setServiceClass(EchoServiceImpl.class);
-        result.setAddress("/echo-route");
-        result.getFeatures().add(loggingFeature);
-        return result;
-    }
-
-    @Produces
-    @ApplicationScoped
-    @Named
-    CxfEndpoint echoServiceResponseFromImpl() {
-        final CxfEndpoint result = new CxfEndpoint();
-        result.setServiceClass(EchoServiceImpl.class);
-        result.setAddress("/echo-impl");
         result.getFeatures().add(loggingFeature);
         return result;
     }

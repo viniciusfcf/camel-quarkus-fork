@@ -16,16 +16,18 @@
  */
 package org.apache.camel.quarkus.component.cxf.soap.mtom.awt.it;
 
-import javax.jws.WebMethod;
-import javax.jws.WebService;
+import java.awt.Image;
+
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebService;
 
 @WebService
 public interface IImageService {
 
     @WebMethod
-    ImageData downloadImage(String name);
+    Image downloadImage(String name);
 
     @WebMethod
-    String uploadImage(ImageData image);
+    String uploadImage(Image image, String imageName);
 
 }

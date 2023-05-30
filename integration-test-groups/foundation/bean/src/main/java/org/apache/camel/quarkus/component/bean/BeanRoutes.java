@@ -23,11 +23,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.apache.camel.AsyncCallback;
 import org.apache.camel.AsyncProcessor;
 import org.apache.camel.BindToRegistry;
@@ -74,6 +73,9 @@ public class BeanRoutes extends RouteBuilder {
         from("direct:named")
                 .to("bean:namedBean?method=hello");
 
+        from("direct:identified")
+                .to("bean:identifiedBean?method=hello");
+
         from("direct:method")
                 .bean(MyBean.class, "sayHello");
 
@@ -103,7 +105,7 @@ public class BeanRoutes extends RouteBuilder {
                 .to("bean:parametersBean?method=parameterLiterals(*, true)");
 
         from("direct:parameterTypes")
-                .to("bean:parametersBean?method=parameterTypes(String)");
+                .to("bean:parametersBean?method=parameterTypes(String.class)");
 
         from("direct:produceInterface")
                 .process(e -> e.getMessage().setBody("produceInterface " + e.getMessage().getBody(String.class)));

@@ -23,6 +23,7 @@ import io.quarkus.test.junit.TestProfile;
 import org.apache.camel.builder.AdviceWith;
 import org.apache.camel.builder.AdviceWithRouteBuilder;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.model.ModelCamelContext;
 import org.apache.camel.quarkus.test.CamelQuarkusTestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +48,7 @@ public class UseOverridePropertiesWithPropertiesComponentTest extends CamelQuark
                 interceptSendToEndpoint("file:*").skipSendToOriginalEndpoint().to("mock:file");
             }
         };
-        AdviceWith.adviceWith(this.context.adapt(ModelCamelContext.class).getRouteDefinition("myRoute"), this.context, mocker);
+        AdviceWith.adviceWith(((ModelCamelContext) this.context).getRouteDefinition("myRoute"), this.context, mocker);
     }
 
     @Override
@@ -64,7 +65,7 @@ public class UseOverridePropertiesWithPropertiesComponentTest extends CamelQuark
 
         template.sendBody("direct:sftp", "Hello World");
 
-        assertMockEndpointsSatisfied();
+        MockEndpoint.assertIsSatisfied(context);
     }
 
     @Override

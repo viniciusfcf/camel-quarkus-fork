@@ -21,26 +21,25 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriInfo;
 import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.ProducerTemplate;
-import org.apache.camel.builder.TemplatedRouteBuilder;
 import org.apache.camel.dsl.xml.io.XmlRoutesBuilderLoader;
 import org.apache.camel.spi.RoutesBuilderLoader;
+import org.apache.camel.support.PluginHelper;
 
 @Path("/xml-io")
 @ApplicationScoped
@@ -55,7 +54,7 @@ public class CoreMainXmlIoResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public JsonObject describeMain() {
-        final ExtendedCamelContext camelContext = main.getCamelContext().adapt(ExtendedCamelContext.class);
+        final ExtendedCamelContext camelContext = main.getCamelContext().getCamelContextExtension();
 
         JsonArrayBuilder listeners = Json.createArrayBuilder();
         main.getMainListeners().forEach(listener -> listeners.add(listener.getClass().getName()));
@@ -63,22 +62,16 @@ public class CoreMainXmlIoResource {
         JsonArrayBuilder routeBuilders = Json.createArrayBuilder();
         main.configure().getRoutesBuilders().forEach(builder -> routeBuilders.add(builder.getClass().getName()));
 
-        TemplatedRouteBuilder.builder(main.getCamelContext(), "myTemplate")
-                .parameter("name", "Camel Quarkus")
-                .parameter("greeting", "Hello")
-                .routeId("templated-route")
-                .add();
-
         JsonArrayBuilder routes = Json.createArrayBuilder();
         main.getCamelContext().getRoutes().forEach(route -> routes.add(route.getId()));
 
         return Json.createObjectBuilder()
-                .add("xml-routes-definitions-loader", camelContext.getXMLRoutesDefinitionLoader().getClass().getName())
+                .add("xml-routes-definitions-loader", PluginHelper.getRoutesLoader(camelContext).getClass().getName())
                 .add("xml-routes-builder-loader",
                         camelContext.getBootstrapFactoryFinder(RoutesBuilderLoader.FACTORY_PATH)
                                 .findClass(XmlRoutesBuilderLoader.EXTENSION).get().getName())
-                .add("xml-model-dumper", camelContext.getModelToXMLDumper().getClass().getName())
-                .add("xml-model-factory", camelContext.getModelJAXBContextFactory().getClass().getName())
+                .add("xml-model-dumper", PluginHelper.getModelToXMLDumper(camelContext).getClass().getName())
+                .add("xml-model-factory", PluginHelper.getModelJAXBContextFactory(camelContext).getClass().getName())
                 .add("routeBuilders", routeBuilders)
                 .add("routes", routes)
                 .build();

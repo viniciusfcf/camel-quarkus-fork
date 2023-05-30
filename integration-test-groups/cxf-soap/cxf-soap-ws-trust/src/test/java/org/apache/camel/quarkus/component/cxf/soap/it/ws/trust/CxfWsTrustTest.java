@@ -20,22 +20,22 @@ import java.net.URL;
 import java.util.Map;
 
 import javax.xml.namespace.QName;
-import javax.xml.ws.BindingProvider;
-import javax.xml.ws.Service;
 
 import io.quarkiverse.cxf.test.QuarkusCxfClientTestUtil;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
+import jakarta.xml.ws.BindingProvider;
+import jakarta.xml.ws.Service;
 import org.apache.camel.quarkus.component.cxf.soap.it.ws.trust.server.TrustHelloService;
 import org.apache.cxf.Bus;
 import org.apache.cxf.BusFactory;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.apache.cxf.ws.security.trust.STSClient;
+import org.apache.cxf.ws.security.trust.TrustException;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static io.quarkiverse.cxf.test.QuarkusCxfClientTestUtil.anyNs;
@@ -90,18 +90,12 @@ public class CxfWsTrustTest {
     }
 
     @Test
-    @Disabled("https://github.com/apache/camel-quarkus/issues/4291")
     public void programmaticSts() throws Exception {
         Bus bus = BusFactory.newInstance().createBus();
         try {
             BusFactory.setThreadDefaultBus(bus);
 
-            final QName serviceName = new QName("https://quarkiverse.github.io/quarkiverse-docs/quarkus-cxf/test/ws-trust",
-                    "TrustHelloService");
-            final URL wsdlURL = new URL(io.quarkiverse.cxf.test.QuarkusCxfClientTestUtil.getServerUrl()
-                    + "/soapservice/jaxws-samples-wsse-policy-trust/TrustHelloService?wsdl");
-            Service service = Service.create(wsdlURL, serviceName);
-            TrustHelloService proxy = (TrustHelloService) service.getPort(TrustHelloService.class);
+            TrustHelloService proxy = trustHelloService();
 
             final QName stsServiceName = new QName("http://docs.oasis-open.org/ws-sx/ws-trust/200512/", "SecurityTokenService");
             final QName stsPortName = new QName("http://docs.oasis-open.org/ws-sx/ws-trust/200512/", "UT_Port");
@@ -115,6 +109,21 @@ public class CxfWsTrustTest {
             bus.shutdown(true);
         }
 
+    }
+
+    @Test
+    public void programmaticStsNotSet() throws Exception {
+        TrustHelloService proxy = trustHelloService();
+        Assertions.assertThatThrownBy(proxy::sayHello).hasCauseInstanceOf(TrustException.class);
+    }
+
+    TrustHelloService trustHelloService() throws Exception {
+        final QName serviceName = new QName("https://quarkiverse.github.io/quarkiverse-docs/quarkus-cxf/test/ws-trust",
+                "TrustHelloService");
+        final URL wsdlURL = new URL(io.quarkiverse.cxf.test.QuarkusCxfClientTestUtil.getServerUrl()
+                + "/soapservice/jaxws-samples-wsse-policy-trust/TrustHelloService?wsdl");
+        Service service = Service.create(wsdlURL, serviceName);
+        return (TrustHelloService) service.getPort(TrustHelloService.class);
     }
 
     public static void setupWsseAndSTSClient(TrustHelloService proxy, Bus bus, String stsWsdlLocation, QName stsService,

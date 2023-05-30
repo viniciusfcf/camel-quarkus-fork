@@ -27,23 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.api.EncodingEnum;
@@ -52,6 +35,22 @@ import ca.uhn.fhir.rest.api.PreferReturnEnum;
 import ca.uhn.fhir.rest.api.SummaryEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.server.exceptions.ResourceGoneException;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.CamelContext;
 import org.apache.camel.CamelExecutionException;
 import org.apache.camel.ProducerTemplate;
@@ -70,7 +69,6 @@ import org.hl7.fhir.dstu2016may.model.Parameters;
 import org.hl7.fhir.dstu2016may.model.Patient;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseMetaType;
-import org.hl7.fhir.instance.model.api.IBaseOperationOutcome;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import static org.apache.camel.quarkus.component.fhir.it.FhirConstants.PATIENT_ADDRESS;
@@ -232,19 +230,19 @@ public class FhirDstu2_1Resource {
         patient.addName().addGiven(PATIENT_FIRST_NAME).addFamily(PATIENT_LAST_NAME);
         patient.setId(id);
 
-        IBaseOperationOutcome result = producerTemplate.requestBody("direct:delete-dstu2-1", patient,
-                IBaseOperationOutcome.class);
-        return result.getIdElement().getIdPart();
+        MethodOutcome result = producerTemplate.requestBody("direct:delete-dstu2-1", patient,
+                MethodOutcome.class);
+        return result.getId().getIdPart();
     }
 
     @Path("/deletePatient/byId")
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     public String deletePatientById(@QueryParam("id") String id) {
-        IBaseOperationOutcome result = producerTemplate.requestBody("direct:deleteById-dstu2-1",
+        MethodOutcome result = producerTemplate.requestBody("direct:deleteById-dstu2-1",
                 new IdType(id),
-                IBaseOperationOutcome.class);
-        return result.getIdElement().getIdPart();
+                MethodOutcome.class);
+        return result.getId().getIdPart();
     }
 
     @Path("/deletePatient/byIdPart")
@@ -254,9 +252,9 @@ public class FhirDstu2_1Resource {
         Map<String, Object> headers = new HashMap<>();
         headers.put("CamelFhir.type", "Patient");
         headers.put("CamelFhir.stringId", id);
-        IBaseOperationOutcome result = producerTemplate.requestBodyAndHeaders("direct:deleteByStringId-dstu2-1", null, headers,
-                IBaseOperationOutcome.class);
-        return result.getIdElement().getIdPart();
+        MethodOutcome result = producerTemplate.requestBodyAndHeaders("direct:deleteByStringId-dstu2-1", null, headers,
+                MethodOutcome.class);
+        return result.getId().getIdPart();
     }
 
     @Path("/deletePatient/byUrl")
@@ -269,10 +267,10 @@ public class FhirDstu2_1Resource {
         }
 
         String body = String.format("Patient?given=%s&family=%s", PATIENT_FIRST_NAME, PATIENT_LAST_NAME);
-        IBaseOperationOutcome result = producerTemplate.requestBodyAndHeaders("direct:deleteConditionalByUrl-dstu2-1", body,
+        MethodOutcome result = producerTemplate.requestBodyAndHeaders("direct:deleteConditionalByUrl-dstu2-1", body,
                 headers,
-                IBaseOperationOutcome.class);
-        return result.getIdElement().getIdPart();
+                MethodOutcome.class);
+        return result.getId().getIdPart();
     }
 
     /////////////////////

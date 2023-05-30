@@ -16,10 +16,9 @@
  */
 package org.apache.camel.quarkus.component.kafka;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.kafka.KafkaConstants;
 import org.apache.camel.component.kafka.consumer.KafkaManualCommit;
@@ -88,7 +87,7 @@ public class CamelKafkaRoutes extends RouteBuilder {
         from("kafka:test-serializer?autoOffsetReset=earliest" +
                 "&keyDeserializer=org.apache.kafka.common.serialization.IntegerDeserializer" +
                 "&valueDeserializer=org.apache.kafka.common.serialization.DoubleDeserializer")
-                        .to(SEDA_SERIALIZER);
+                .to(SEDA_SERIALIZER);
 
         // Header Propagation using CustomHeaderDeserialize
         from("kafka:test-propagation?headerDeserializer=#customHeaderDeserializer")

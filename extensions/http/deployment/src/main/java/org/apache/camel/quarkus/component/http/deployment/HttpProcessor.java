@@ -22,7 +22,8 @@ import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import org.apache.camel.http.base.HttpOperationFailedException;
-import org.apache.http.client.config.RequestConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.auth.BasicScheme;
 
 class HttpProcessor {
     public static final String FEATURE = "camel-http";
@@ -39,9 +40,15 @@ class HttpProcessor {
 
     @BuildStep
     void registerForReflection(BuildProducer<ReflectiveClassBuildItem> reflectiveClasses) {
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(true, false, "org.apache.camel.component.http.HttpMethods"));
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(true, false, "org.apache.http.impl.client.HttpClientBuilder"));
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(true, false, RequestConfig.Builder.class.getName()));
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(false, false, HttpOperationFailedException.class));
+        reflectiveClasses.produce(ReflectiveClassBuildItem.builder("org.apache.camel.component.http.HttpMethods").methods()
+                .build());
+        reflectiveClasses.produce(ReflectiveClassBuildItem.builder("org.apache.http.impl.client.HttpClientBuilder")
+                .methods().build());
+        reflectiveClasses.produce(
+                ReflectiveClassBuildItem.builder(RequestConfig.Builder.class.getName()).methods().build());
+        reflectiveClasses.produce(
+                ReflectiveClassBuildItem.builder(BasicScheme.class).methods(false).fields(false).serialization().build());
+        reflectiveClasses.produce(
+                ReflectiveClassBuildItem.builder(HttpOperationFailedException.class).build());
     }
 }

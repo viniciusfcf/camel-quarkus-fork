@@ -19,21 +19,23 @@ package org.apache.camel.quarkus.component.micrometer.deployment;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-
 import io.quarkus.test.QuarkusUnitTest;
+import jakarta.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.component.micrometer.routepolicy.MicrometerRoutePolicyFactory;
+import org.apache.camel.component.micrometer.spi.InstrumentedThreadPoolFactory;
 import org.apache.camel.impl.engine.DefaultMessageHistoryFactory;
 import org.apache.camel.spi.EventNotifier;
 import org.apache.camel.spi.MessageHistoryFactory;
 import org.apache.camel.spi.RoutePolicyFactory;
+import org.apache.camel.spi.ThreadPoolFactory;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -62,5 +64,9 @@ public class MicrometerMetricsConfigDefaultsTest {
                 .filter(eventNotifier -> !eventNotifier.getClass().getName().contains("BaseMainSupport"))
                 .collect(Collectors.toList());
         assertEquals(2, eventNotifiers.size());
+
+        ThreadPoolFactory threadPoolFactory = context.getExecutorServiceManager().getThreadPoolFactory();
+        assertNotNull(threadPoolFactory);
+        assertFalse(threadPoolFactory instanceof InstrumentedThreadPoolFactory);
     }
 }

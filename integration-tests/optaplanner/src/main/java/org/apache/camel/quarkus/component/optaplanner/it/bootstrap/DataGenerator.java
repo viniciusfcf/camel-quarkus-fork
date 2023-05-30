@@ -21,10 +21,9 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import org.apache.camel.quarkus.component.optaplanner.it.domain.Lesson;
 import org.apache.camel.quarkus.component.optaplanner.it.domain.Room;
 import org.apache.camel.quarkus.component.optaplanner.it.domain.TimeTable;

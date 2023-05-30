@@ -6,7 +6,7 @@ Camel Quarkus supports several domain specific languages (DSLs) to define Camel 
 
 Extending `org.apache.camel.builder.RouteBuilder` and using the fluent builder methods available there
 is the most common way of defining Camel Routes.
-Here is an example from the https://github.com/apache/camel-quarkus-examples/tree/main/timer-log[timer-log] quicksstart:
+Here is an example from the https://github.com/apache/camel-quarkus-examples/tree/main/timer-log[timer-log] quickstart:
 
 [source,java]
 ----
@@ -86,6 +86,13 @@ Path globbing like `camel.main.routes-include-pattern = *./routes.xml` currently
 
 [WARNING]
 ====
+When using XML routes with beans, it is sometime needed to refer to class name, for instance `beanType=org.apache.SomeClass`.
+In such cases, it might be needed to register the class for reflection in native mode.
+Refer to the xref:user-guide/native-mode.adoc#reflection[Native mode] user guide for more information.
+====
+
+[WARNING]
+====
 Spring XML with `<beans>` or Blueprint XML with `<blueprint>` elements are not supported.
 ====
 
@@ -120,16 +127,85 @@ The route XML should be in the simplified version like:
 </routeTemplates>
 ----
 
+== YAML DSL
+
+To configure routes with YAML, you must add the `camel-quarkus-yaml-dsl` dependency to the classpath.
+
+With Camel Main, you can set a property that points to the location of YAML files containing routes, xref:manual::rest-dsl.adoc[REST DSL] and xref:manual::route-template.adoc[Route templates] definitions:
+
+[source,properties]
+----
+camel.main.routes-include-pattern = routes/routes.yaml, routes/rests.yaml, rests/route-template.yaml
+----
+
+.Route
+[source,yaml]
+----
+- route:
+    id: "my-yaml-route"
+    from:
+      uri: "timer:from-yaml?period=1000"
+      steps:
+        - set-body:
+            constant: "Hello YAML!"
+        - to: "log:from-yaml"
+----
+
+.Rest DSL
+
+[source,yaml]
+----
+- rest:
+    get:
+      - path: "/greeting"
+        to: "direct:greet"
+
+- route:
+    id: "rest-route"
+    from:
+      uri: "direct:greet"
+      steps:
+        - set-body:
+            constant: "Hello YAML!"
+----
+
+.Route Templates
+[source,yaml]
+----
+- route-template:
+    id: "myTemplate"
+    parameters:
+      - name: "name"
+      - name: "greeting"
+        defaultValue: "Hello"
+      - name: "myPeriod"
+        defaultValue: "3s"
+    from:
+      uri: "timer:{{name}}?period={{myPeriod}}"
+      steps:
+      - set-body:
+          expression:
+            simple: "{{greeting}} ${body}"
+      - log: "${body}"
+
+- templated-route:
+    route-template-ref: "myTemplate"
+    parameters:
+      - name: "name"
+        value: "tick"
+      - name: "greeting"
+        value: "Bonjour"
+      - name: "myPeriod"
+        value: "5s"
+----
+
 == Other route DSLs
 
-Since Camel Quarkus 1.8.0, you can also use
-xref:reference/extensions/java-joor-dsl.adoc[Java jOOR],
-xref:reference/extensions/groovy-dsl.adoc[Groovy],
-xref:reference/extensions/yaml-dsl.adoc[YAML],
-xref:reference/extensions/kotlin-dsl.adoc[Kotlin] or
-xref:reference/extensions/js-dsl.adoc[JavaScript] for defining Camel routes.
-
-Except for YAML, these DSLs are supported only in JVM mode, because they load and compile the routes at runtime.
+* xref:reference/extensions/java-joor-dsl.adoc[Java jOOR]
+* xref:reference/extensions/groovy-dsl.adoc[Groovy]
+* xref:reference/extensions/yaml-dsl.adoc[YAML]
+* xref:reference/extensions/kotlin-dsl.adoc[Kotlin]
+* xref:reference/extensions/js-dsl.adoc[JavaScript]
 
 == What's next?
 

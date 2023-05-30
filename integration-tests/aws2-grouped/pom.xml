@@ -22,13 +22,17 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-build-parent-it</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../../poms/build-parent-it/pom.xml</relativePath>
     </parent>
 
     <artifactId>camel-quarkus-integration-test-aws2-grouped</artifactId>
     <name>Camel Quarkus :: Integration Tests :: AWS2 Grouped</name>
     <description>AWS 2 tests from ../integration-test-groups/aws2 merged together</description>
+
+    <properties>
+        <test.class.name.prefix>Grouped</test.class.name.prefix>
+    </properties>
 
     <!-- Regenerate the dependencies via `mvn process-resources -Pformat -N` from the source tree root directory -->
     <dependencies>
@@ -85,6 +89,10 @@
             <artifactId>camel-quarkus-aws2-sqs</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-integration-tests-support-aws2</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
             <scope>test</scope>
@@ -92,11 +100,6 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-integration-tests-support-aws2</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -120,40 +123,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-integration-tests-support-aws2</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>add-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${basedir}/target/src/main/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>add-test-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${basedir}/target/src/test/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.codehaus.gmaven</groupId>
                 <artifactId>groovy-maven-plugin</artifactId>
@@ -170,6 +149,7 @@
                                 <group-tests.source.dir>${maven.multiModuleProjectDirectory}/integration-test-groups/aws2</group-tests.source.dir>
                                 <group-tests.dest.module.dir>${project.basedir}</group-tests.dest.module.dir>
                                 <group-tests.concat.rel.paths>src/main/resources/application.properties,src/test/resources/META-INF/services/org.apache.camel.quarkus.test.support.aws2.Aws2TestEnvCustomizer</group-tests.concat.rel.paths>
+                                <group-tests.class.name.prefix>${test.class.name.prefix}</group-tests.class.name.prefix>
                             </properties>
                         </configuration>
                     </execution>

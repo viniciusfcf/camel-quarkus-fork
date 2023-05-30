@@ -22,25 +22,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import com.pubnub.api.PNConfiguration;
 import com.pubnub.api.PubNub;
+import com.pubnub.api.PubNubException;
+import com.pubnub.api.UserId;
 import com.pubnub.api.enums.PNReconnectionPolicy;
 import com.pubnub.api.models.consumer.history.PNHistoryItemResult;
 import com.pubnub.api.models.consumer.presence.PNGetStateResult;
 import com.pubnub.api.models.consumer.presence.PNHereNowResult;
 import com.pubnub.api.models.consumer.pubsub.PNMessageResult;
 import com.pubnub.api.models.consumer.pubsub.PNPresenceEventResult;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ConsumerTemplate;
 import org.apache.camel.Exchange;
@@ -155,11 +156,11 @@ public class PubnubResource {
         return result.getTotalChannels();
     }
 
-    @javax.enterprise.inject.Produces
+    @jakarta.enterprise.inject.Produces
     @Singleton
     @Named
-    public PubNub pubNub() {
-        PNConfiguration configuration = new PNConfiguration();
+    public PubNub pubNub() throws PubNubException {
+        PNConfiguration configuration = new PNConfiguration(new UserId("camel-quarkus-integration-tests"));
         configuration.setPublishKey(publishKey);
         configuration.setSubscribeKey(subscribeKey);
         configuration.setSecretKey(secretKey);

@@ -24,6 +24,7 @@ import org.apache.camel.Endpoint;
 import org.apache.camel.builder.AdviceWith;
 import org.apache.camel.builder.AdviceWithRouteBuilder;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.model.ModelCamelContext;
 import org.apache.camel.quarkus.test.CamelQuarkusTestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,7 @@ public class AdviceWithAnotherRouteTest extends CamelQuarkusTestSupport {
                 interceptSendToEndpoint("file:*").skipSendToOriginalEndpoint().to("mock:file");
             }
         };
-        AdviceWith.adviceWith(this.context.adapt(ModelCamelContext.class).getRouteDefinition("myRoute"), this.context, mocker);
+        AdviceWith.adviceWith(((ModelCamelContext) this.context).getRouteDefinition("myRoute"), this.context, mocker);
 
         startRouteDefinitions();
     }
@@ -71,7 +72,7 @@ public class AdviceWithAnotherRouteTest extends CamelQuarkusTestSupport {
         Endpoint endpoint = getMockEndpoint("mock:start", true);
         System.out.println(endpoint);
 
-        assertMockEndpointsSatisfied();
+        MockEndpoint.assertIsSatisfied(context);
     }
 
     @Override

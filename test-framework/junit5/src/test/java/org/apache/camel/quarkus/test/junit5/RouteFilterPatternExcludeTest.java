@@ -19,6 +19,7 @@ package org.apache.camel.quarkus.test.junit5;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.model.Model;
 import org.apache.camel.quarkus.test.CamelQuarkusTestSupport;
 import org.junit.jupiter.api.Test;
@@ -37,14 +38,15 @@ public class RouteFilterPatternExcludeTest extends CamelQuarkusTestSupport {
     @Test
     public void testRouteFilter() throws Exception {
         assertEquals(1, context.getRoutes().size());
-        assertEquals(1, context.getExtension(Model.class).getRouteDefinitions().size());
-        assertEquals("foo", context.getExtension(Model.class).getRouteDefinitions().get(0).getId());
+        assertEquals(1, context.getCamelContextExtension().getContextPlugin(Model.class).getRouteDefinitions().size());
+        assertEquals("foo",
+                context.getCamelContextExtension().getContextPlugin(Model.class).getRouteDefinitions().get(0).getId());
 
         getMockEndpoint("mock:foo").expectedMessageCount(1);
 
         template.sendBody("direct:foo", "Hello World");
 
-        assertMockEndpointsSatisfied();
+        MockEndpoint.assertIsSatisfied(context);
     }
 
     @Override

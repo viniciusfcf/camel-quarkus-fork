@@ -39,6 +39,7 @@ import org.apache.camel.quarkus.component.kamelet.KameletConfiguration;
 import org.apache.camel.quarkus.component.kamelet.KameletRecorder;
 import org.apache.camel.quarkus.core.deployment.spi.CamelContextCustomizerBuildItem;
 import org.apache.camel.spi.Resource;
+import org.apache.camel.support.PluginHelper;
 
 class KameletProcessor {
     private static final String FEATURE = "camel-kamelet";
@@ -53,9 +54,8 @@ class KameletProcessor {
         return new KameletResolverBuildItem(new KameletResolver() {
             @Override
             public Optional<Resource> resolve(String id, CamelContext context) throws Exception {
-                ExtendedCamelContext ecc = context.adapt(ExtendedCamelContext.class);
                 return Optional.ofNullable(
-                        ecc.getResourceLoader().resolveResource("/kamelets/" + id + ".kamelet.yaml"));
+                        PluginHelper.getResourceLoader(context).resolveResource("/kamelets/" + id + ".kamelet.yaml"));
             }
         });
     }
@@ -74,16 +74,16 @@ class KameletProcessor {
                 .collect(Collectors.toList());
 
         CamelContext context = new DefaultCamelContext();
-        ExtendedCamelContext ecc = context.adapt(ExtendedCamelContext.class);
+        ExtendedCamelContext ecc = context.getCamelContextExtension();
 
         for (String id : configuration.identifiers.orElse(Collections.emptyList())) {
             for (KameletResolver resolver : kameletResolvers) {
-                final Optional<Resource> resource = resolver.resolve(id, ecc);
+                final Optional<Resource> resource = resolver.resolve(id, context);
                 if (!resource.isPresent()) {
                     continue;
                 }
 
-                Collection<RoutesBuilder> rbs = ecc.getRoutesLoader().findRoutesBuilders(resource.get());
+                Collection<RoutesBuilder> rbs = PluginHelper.getRoutesLoader(ecc).findRoutesBuilders(resource.get());
                 for (RoutesBuilder rb : rbs) {
                     RouteBuilder routeBuilder = (RouteBuilder) rb;
                     routeBuilder.configure();

@@ -20,18 +20,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.search.Search;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.ProducerTemplate;
 
 @Path("/micrometer")
@@ -42,6 +41,9 @@ public class MicrometerResource {
 
     @Inject
     MeterRegistry meterRegistry;
+
+    @Inject
+    TestMetric counter;
 
     @Path("/metric/{type}/{name}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -63,20 +65,25 @@ public class MicrometerResource {
             return Response.status(404).build();
         }
 
-        Response.ResponseBuilder response = Response.ok();
-        if (type.equals("counter")) {
-            response.entity(search.counter().count());
-        } else if (type.equals("gauge")) {
-            response.entity(search.gauge().value());
-        } else if (type.equals("summary")) {
-            response.entity(search.summary().max());
-        } else if (type.equals("timer")) {
-            response.entity(search.timer().totalTime(TimeUnit.MILLISECONDS));
-        } else {
-            throw new IllegalArgumentException("Unknown metric type: " + type);
-        }
+        try {
+            Response.ResponseBuilder response = Response.ok();
+            if (type.equals("counter")) {
+                response.entity(search.counter().count());
+            } else if (type.equals("gauge")) {
+                response.entity(search.gauge().value());
+            } else if (type.equals("summary")) {
+                response.entity(search.summary().max());
+            } else if (type.equals("timer")) {
+                response.entity(search.timer().totalTime(TimeUnit.MILLISECONDS));
+            } else {
+                throw new IllegalArgumentException("Unknown metric type: " + type);
+            }
 
-        return response.build();
+            return response.build();
+        } catch (NullPointerException e) {
+            //metric does not exist
+            return Response.status(500).entity("Metric does not exist").build();
+        }
     }
 
     @Path("/counter")
@@ -104,6 +111,13 @@ public class MicrometerResource {
     @GET
     public Response logMessage() {
         producerTemplate.requestBody("direct:log", (Object) null);
+        return Response.ok().build();
+    }
+
+    @Path("/annotations/call/{number}")
+    @GET
+    public Response annotationsCall(@PathParam("number") int number) {
+        producerTemplate.requestBodyAndHeader("direct:annotatedBean", (Object) null, "number", number);
         return Response.ok().build();
     }
 }

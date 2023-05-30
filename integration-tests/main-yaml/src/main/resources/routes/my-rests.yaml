@@ -17,13 +17,28 @@
 
 - rest:
     get:
-      - path: "/greeting"
-        to: "direct:rest"
+      - path: "/rest"
+        to: "direct:echoMethodPath"
+    post:
+      - path: "/rest"
+        to: "direct:echoMethodPath"
+    patch:
+      - path: "/rest"
+        to: "direct:echoMethodPath"
+    put:
+      - path: "/rest"
+        to: "direct:echoMethodPath"
+    delete:
+      - path: "/rest"
+        to: "direct:echoMethodPath"
+    head:
+      - path: "/rest"
+        to: "direct:echoMethodPath"
 
 - route:
     id: "rest-route"
     from:
-      uri: "direct:rest"
+      uri: "direct:echoMethodPath"
       steps:
         - set-body:
-            constant: "Hello World!!!"
+            simple: "${header.CamelHttpMethod}: ${header.CamelHttpPath}"

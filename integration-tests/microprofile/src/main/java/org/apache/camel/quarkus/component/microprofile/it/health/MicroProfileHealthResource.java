@@ -16,13 +16,12 @@
  */
 package org.apache.camel.quarkus.component.microprofile.it.health;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import org.apache.camel.CamelContext;
 import org.apache.camel.health.HealthCheckRegistry;
 
@@ -49,7 +48,7 @@ public class MicroProfileHealthResource {
     @POST
     public void healthCheckEnabled(@PathParam("healthCheckId") String healthCheckId,
             @QueryParam("healthCheckEnabled") boolean isHealthCheckEnabled) {
-        HealthCheckRegistry registry = camelContext.getExtension(HealthCheckRegistry.class);
+        HealthCheckRegistry registry = camelContext.getCamelContextExtension().getContextPlugin(HealthCheckRegistry.class);
         registry.getCheck(healthCheckId).ifPresent(healthCheck -> {
             healthCheck.setEnabled(isHealthCheckEnabled);
             if (isHealthCheckEnabled) {

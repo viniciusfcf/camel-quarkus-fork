@@ -28,19 +28,17 @@ import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.CamelContext;
 import org.apache.camel.CamelContextAware;
-import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.NoSuchLanguageException;
 import org.apache.camel.catalog.RuntimeCamelCatalog;
 import org.apache.camel.impl.engine.DefaultHeadersMapFactory;
@@ -116,7 +114,7 @@ public class CoreResource {
     @Produces(MediaType.TEXT_PLAIN)
     public boolean adaptToModelCamelContext() {
         try {
-            context.adapt(ModelCamelContext.class);
+            ModelCamelContext modelCamelContext = (ModelCamelContext) context;
             return true;
         } catch (ClassCastException e) {
             return false;
@@ -128,7 +126,7 @@ public class CoreResource {
     @Produces(MediaType.TEXT_PLAIN)
     public boolean adaptToExtendedCamelContext() {
         try {
-            context.adapt(ExtendedCamelContext.class);
+            context.getCamelContextExtension();
             return true;
         } catch (ClassCastException e) {
             return false;
@@ -139,7 +137,8 @@ public class CoreResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response catalog(@PathParam("type") String type, @PathParam("name") String name) throws IOException {
-        final CamelRuntimeCatalog catalog = (CamelRuntimeCatalog) context.getExtension(RuntimeCamelCatalog.class);
+        final CamelRuntimeCatalog catalog = (CamelRuntimeCatalog) context.getCamelContextExtension()
+                .getContextPlugin(RuntimeCamelCatalog.class);
 
         try {
             final String schema;
@@ -231,14 +230,14 @@ public class CoreResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public boolean headersMapFactory() {
-        return context.adapt(ExtendedCamelContext.class).getHeadersMapFactory() instanceof DefaultHeadersMapFactory;
+        return context.getCamelContextExtension().getHeadersMapFactory() instanceof DefaultHeadersMapFactory;
     }
 
     @Path("/startup-step-recorder")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public boolean startupStepRecorder() {
-        return context.adapt(ExtendedCamelContext.class).getStartupStepRecorder() instanceof DefaultStartupStepRecorder;
+        return context.getCamelContextExtension().getStartupStepRecorder() instanceof DefaultStartupStepRecorder;
     }
 
     @Path("/custom-bean-with-constructor-parameter-injection")

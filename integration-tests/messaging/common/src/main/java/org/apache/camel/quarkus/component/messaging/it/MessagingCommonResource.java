@@ -25,23 +25,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
-import javax.jms.BytesMessage;
-import javax.jms.MapMessage;
-import javax.jms.TextMessage;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import jakarta.inject.Inject;
+import jakarta.jms.BytesMessage;
+import jakarta.jms.MapMessage;
+import jakarta.jms.TextMessage;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ConsumerTemplate;
 import org.apache.camel.Exchange;
@@ -88,11 +88,12 @@ public class MessagingCommonResource {
         return Response.created(new URI("https://camel.apache.org/")).build();
     }
 
-    @Path("/type/{type}")
+    @Path("{queueName}/type/{type}")
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
-    public Response jmsMessageType(@PathParam("type") String type, String messageBody) throws Exception {
+    public Response jmsMessageType(@PathParam("queueName") String queueName, @PathParam("type") String type, String messageBody)
+            throws Exception {
         MockEndpoint mockEndpoint = context.getEndpoint("mock:jmsType", MockEndpoint.class);
         mockEndpoint.reset();
         mockEndpoint.expectedMessageCount(1);
@@ -121,20 +122,20 @@ public class MessagingCommonResource {
             throw new IllegalArgumentException("Unknown type: " + type);
         }
 
-        producerTemplate.sendBody(componentScheme + ":queue:typeTest", payload);
+        producerTemplate.sendBody(componentScheme + ":queue:" + queueName, payload);
 
         mockEndpoint.assertIsSatisfied(5000);
 
         Exchange exchange = mockEndpoint.getReceivedExchanges().get(0);
-        javax.jms.Message message = messageResolver.resolve(exchange);
+        jakarta.jms.Message message = messageResolver.resolve(exchange);
 
         Object result;
-        if (type.equals("string") || type.equals("node")) {
-            assert message instanceof javax.jms.TextMessage;
+        if ("string".equals(type) || "node".equals(type)) {
+            assert message instanceof jakarta.jms.TextMessage;
             TextMessage textMessage = (TextMessage) message;
             result = textMessage.getText();
         } else {
-            assert message instanceof javax.jms.BytesMessage;
+            assert message instanceof jakarta.jms.BytesMessage;
             BytesMessage byteMessage = (BytesMessage) message;
             byteMessage.reset();
             byte[] byteData;
@@ -146,16 +147,16 @@ public class MessagingCommonResource {
         return Response.ok().entity(result).build();
     }
 
-    @Path("/map")
+    @Path("/{queueName}/map")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public Response jmsMapMessage(Map<String, String> payload) throws Exception {
+    public Response jmsMapMessage(@PathParam("queueName") String queueName, Map<String, String> payload) throws Exception {
         MockEndpoint mockEndpoint = context.getEndpoint("mock:mapResult", MockEndpoint.class);
         mockEndpoint.expectedMessageCount(1);
 
-        producerTemplate.sendBody(componentScheme + ":queue:mapTest", payload);
+        producerTemplate.sendBody(componentScheme + ":queue:" + queueName, payload);
 
         mockEndpoint.assertIsSatisfied(5000);
 
@@ -172,26 +173,26 @@ public class MessagingCommonResource {
         return Response.ok().entity(result).build();
     }
 
-    @Path("/selector/{expression}")
+    @Path("{queueName}/selector/{expression}")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public String jmsSelector(@PathParam("expression") String expression) {
-        producerTemplate.sendBodyAndHeader(componentScheme + ":queue:selectorA",
+    public String jmsSelector(@PathParam("queueName") String queueName, @PathParam("expression") String expression) {
+        producerTemplate.sendBodyAndHeader(componentScheme + ":queue:" + queueName,
                 "Camel JMS Selector Not Matched",
                 "foo", "baz");
-        producerTemplate.sendBodyAndHeader(componentScheme + ":queue:selectorA",
+        producerTemplate.sendBodyAndHeader(componentScheme + ":queue:" + queueName,
                 "Camel JMS Selector Match",
                 "foo", "bar");
 
         return consumerTemplate.receiveBody(
-                componentScheme + ":selectorB?selector=" + expression, 5000,
+                componentScheme + ":" + queueName + "2?selector=" + expression, 5000,
                 String.class);
     }
 
-    @Path("/transaction")
+    @Path("/{queueName}/transaction")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public Response jmsTransaction() throws Exception {
+    public Response jmsTransaction(@PathParam("queueName") String queueName) throws Exception {
         MockEndpoint mockEndpoint = context.getEndpoint("mock:txResult", MockEndpoint.class);
         mockEndpoint.expectedMessageCount(1);
 
@@ -200,7 +201,7 @@ public class MessagingCommonResource {
         mockEndpoint.message(0).header(Exchange.REDELIVERY_COUNTER).isEqualTo(2);
         mockEndpoint.message(0).header("JMSRedelivered").isEqualTo(false);
 
-        producerTemplate.sendBody(componentScheme + ":queue:txTest?transacted=true",
+        producerTemplate.sendBody(componentScheme + ":queue:" + queueName + "?transacted=true",
                 "Test JMS Transaction");
 
         mockEndpoint.assertIsSatisfied(5000);
@@ -211,15 +212,15 @@ public class MessagingCommonResource {
         return Response.ok().entity(message.getBody()).build();
     }
 
-    @Path("/object")
+    @Path("/{queueName}/object")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     @POST
-    public Response testObjectMessage(String name) throws InterruptedException {
+    public Response testObjectMessage(@PathParam("queueName") String queueName, String name) throws InterruptedException {
         MockEndpoint mockEndpoint = context.getEndpoint("mock:objectTestResult", MockEndpoint.class);
         mockEndpoint.expectedMessageCount(1);
 
-        producerTemplate.sendBody(componentScheme + ":queue:objectTest", new Person(name));
+        producerTemplate.sendBody(componentScheme + ":queue:" + queueName, new Person(name));
 
         mockEndpoint.assertIsSatisfied();
 
@@ -230,17 +231,17 @@ public class MessagingCommonResource {
         return Response.ok().entity(body.getName()).build();
     }
 
-    @Path("/topic")
+    @Path("/topic/{topicName}")
     @Consumes(MediaType.TEXT_PLAIN)
     @POST
-    public void topicPubSub(String message) throws Exception {
+    public void topicPubSub(@PathParam("topicName") String topicName, String message) throws Exception {
         MockEndpoint topicResultA = context.getEndpoint("mock:topicResultA", MockEndpoint.class);
         topicResultA.expectedBodiesReceived(message);
 
         MockEndpoint topicResultB = context.getEndpoint("mock:topicResultB", MockEndpoint.class);
         topicResultB.expectedBodiesReceived(message);
 
-        producerTemplate.sendBody(componentScheme + ":topic:test", message);
+        producerTemplate.sendBody(componentScheme + ":topic:" + topicName, message);
 
         topicResultA.assertIsSatisfied(5000);
         topicResultB.assertIsSatisfied(5000);
@@ -284,5 +285,15 @@ public class MessagingCommonResource {
     @GET
     public String pojoConsumer() {
         return pojoConsumer.getMessage(5000);
+    }
+
+    @Path("/routes/start")
+    @GET
+    public void startRoutes() {
+        try {
+            context.getRouteController().startAllRoutes();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to start camel routes", e);
+        }
     }
 }

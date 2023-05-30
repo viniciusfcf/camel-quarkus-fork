@@ -18,15 +18,17 @@ package org.apache.camel.quarkus.test;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.inject.Inject;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.callback.QuarkusTestContext;
 import io.quarkus.test.junit.callback.QuarkusTestMethodContext;
+import jakarta.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Route;
 import org.apache.camel.Service;
+import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.ModelCamelContext;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.quarkus.core.FastCamelContext;
@@ -34,6 +36,8 @@ import org.apache.camel.spi.Registry;
 import org.apache.camel.test.junit5.CamelTestSupport;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@link CamelTestSupport} class does not work on Quarkus. This class provides a replacement, which can be used in
@@ -72,8 +76,15 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public class CamelQuarkusTestSupport extends CamelTestSupport
         implements QuarkusTestProfile {
 
+    private static final Logger LOG = LoggerFactory.getLogger(CamelQuarkusTestSupport.class);
+
     @Inject
     protected CamelContext context;
+
+    /*
+     * Set of routes, which were created by routeBuilder. This set is used by some callbacks.
+     */
+    Set<String> createdRoutes;
 
     //------------------------ quarkus callbacks ---------------
 
@@ -152,7 +163,7 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
      * This method is not called on Camel Quarkus because the `CamelRegistry` is created and owned by Quarkus CDI container.
      * If you need to customize the registry upon creation, you may want to override {@link #createCamelContext()}
      * in the following way:
-     * 
+     *
      * <pre>
      * &#64;Override
      * protected CamelContext createCamelContext() throws Exception {
@@ -162,7 +173,7 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
      *     return ctx;
      * }
      * </pre>
-     * 
+     *
      * @return Never returns any result. UnsupportedOperationException is thrown instead.
      */
     @Override
@@ -220,6 +231,27 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
     }
 
     /**
+     * Method {@link CamelTestSupport#setUp()} is triggered via annotation {@link org.junit.jupiter.api.BeforeEach}.
+     * Its execution is disabled (by using overriding method without any annotation) and is executed from
+     * {@link BeforeEachCallback}
+     */
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+    }
+
+    /**
+     * Method {@link CamelTestSupport#tearDown()} is triggered via annotation
+     * {@link org.junit.jupiter.api.AfterEach}.
+     * Its execution is disabled (by using overriding method without any annotation) and is executed from
+     * {@link AfterEachCallback}
+     */
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+    }
+
+    /**
      * This method stops the Camel context. Be aware that on of the limitation that Quarkus brings is that context
      * can not be started (lifecycle f the context is bound to the application) .
      *
@@ -237,12 +269,27 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
     @Override
     protected final void doQuarkusCheck() {
         //can run on Quarkus
+
+        //log warning in case that at least one RouteBuilder in the registry, it might mean, that unintentionally
+        // RouteBuilders are shared across or that RouteBuilder is created with @Produces
+        if (isUseRouteBuilder() && !context.getRegistry().findByType(RouteBuilder.class).isEmpty()) {
+            LOG.warn(
+                    "Test with `true` in `isUserRouteBuilder' and `RouteBuilder` detected in the context registry. " +
+                            "All tests will share this routeBuilder from the registry. This is usually not intended. " +
+                            "If `@Produces` is used to create such a RouteBuilder, please refactor the code " +
+                            "by overriding the method `createRouteBuilder()` instead.");
+        }
     }
 
-    void internalAfterAll(QuarkusTestContext context) {
+    void internalAfterAll(QuarkusTestContext context, ExtensionContext extensionContext) {
         try {
-            doPostTearDown();
+            if (isCreateCamelContextPerClass()) {
+                super.afterAll(extensionContext);
+            } else {
+                doPostTearDown();
+            }
             cleanupResources();
+
         } catch (Exception e) {
             // ignore
         }
@@ -268,6 +315,12 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
         if (isUseAdviceWith() || isUseDebugger()) {
             ((FastCamelContext) context).suspend();
         }
+
+        if (isUseRouteBuilder()) {
+            //save the routeIds of routes existing before setup
+            createdRoutes = context.getRoutes().stream().map(r -> r.getRouteId()).collect(Collectors.toSet());
+        }
+
         super.doPreSetup();
     }
 
@@ -283,12 +336,21 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
         if (isUseAdviceWith() || isUseDebugger()) {
             ((FastCamelContext) context).resume();
             if (isUseDebugger()) {
-                ModelCamelContext mcc = context.adapt(ModelCamelContext.class);
+                ModelCamelContext mcc = (ModelCamelContext) context;
                 List<RouteDefinition> rdfs = mcc.getRouteDefinitions();
                 //if context was suspended routes was not added, because it would trigger start of the context
                 // routes have to be added now
                 mcc.addRouteDefinitions(rdfs);
             }
+        }
+
+        if (isUseRouteBuilder()) {
+            //remove from the routes all routes which existed before setup
+            var allRoutes = context.getRoutes().stream().map(r -> r.getRouteId()).collect(Collectors.toSet());
+            if (createdRoutes != null) {
+                allRoutes.removeAll(createdRoutes);
+            }
+            createdRoutes = allRoutes;
         }
         super.doPostSetup();
     }
@@ -327,12 +389,13 @@ public class CamelQuarkusTestSupport extends CamelTestSupport
      * Helper method to start routeDefinitions (to be used with `adviceWith`).
      */
     protected void startRouteDefinitions() throws Exception {
-        List<RouteDefinition> definitions = new ArrayList<>(context.adapt(ModelCamelContext.class).getRouteDefinitions());
+        ModelCamelContext modelCamelContext = (ModelCamelContext) context;
+        List<RouteDefinition> definitions = new ArrayList<>(modelCamelContext.getRouteDefinitions());
         for (Route r : context.getRoutes()) {
             //existing route does not need to be started
             definitions.remove(r.getRoute());
         }
-        context.adapt(ModelCamelContext.class).startRouteDefinitions(definitions);
+        modelCamelContext.startRouteDefinitions(definitions);
     }
 
 }

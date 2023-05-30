@@ -24,10 +24,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-
 import io.agroal.api.AgroalDataSource;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +44,19 @@ public class SqlDbInitializer {
 
     public void initDb() throws SQLException, IOException {
 
+        runScripts("initDb.sql");
+
+        if (SqlHelper.useDocker()) {
+            //docker execution may require more sql scripts
+            runScripts("initDb_docker.sql");
+        }
+    }
+
+    private void runScripts(String fileName) throws SQLException, IOException {
         try (Connection conn = dataSource.getConnection()) {
             try (Statement statement = conn.createStatement()) {
                 try (InputStream is = Thread.currentThread().getContextClassLoader()
-                        .getResourceAsStream("sql/" + dbKind + "/initDb.sql");
+                        .getResourceAsStream("sql/" + dbKind + "/" + fileName);
                         InputStreamReader isr = new InputStreamReader(is);
                         BufferedReader reader = new BufferedReader(isr)) {
 
@@ -66,6 +74,5 @@ public class SqlDbInitializer {
                 }
             }
         }
-
     }
 }

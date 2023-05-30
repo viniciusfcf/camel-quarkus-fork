@@ -100,7 +100,7 @@ class FileTest {
         startRouteAndWait(CONSUME_BATCH);
 
         await().atMost(10, TimeUnit.SECONDS).until(() -> {
-            Map<String, Object> records = RestAssured
+            Map<?, ?> records = RestAssured
                     .get("/file/getBatch/")
                     .then()
                     .statusCode(200)
@@ -112,6 +112,7 @@ class FileTest {
         });
     }
 
+    @Disabled("Disabling as an experiment in the context of CAMEL-QUARKUS-3584. Let's check whether filter and idempotent are sort of polluting each other.")
     @Test
     public void idempotent() throws IOException {
         // Create a new file
@@ -149,7 +150,6 @@ class FileTest {
                 equalTo(FILE_CONTENT_02));
     }
 
-    @Disabled("Disabling as an experiment in the context of CAMEL-QUARKUS-3584. Let's check whether filter and idempotent are sort of polluting each other.")
     @Test
     public void filter() throws IOException {
         String fileName = createFile(FILE_CONTENT_01, "/file/create/filter", null, "skip_" + UUID.randomUUID().toString());

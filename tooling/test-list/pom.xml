@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-tooling</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>camel-quarkus-test-list</artifactId>
@@ -56,6 +56,8 @@
                             </includes>
                             <excludes>
                                 <exclude>support/**/*</exclude>
+                                <exclude>support/**/*</exclude>
+                                <exclude>groovy-dsl/pom.xml</exclude><!-- See https://github.com/apache/camel-quarkus/issues/4894 -->
                                 <exclude>master/pom.xml</exclude>
                                 <exclude>master-openshift/pom.xml</exclude>
                                 <exclude>master-file/pom.xml</exclude>

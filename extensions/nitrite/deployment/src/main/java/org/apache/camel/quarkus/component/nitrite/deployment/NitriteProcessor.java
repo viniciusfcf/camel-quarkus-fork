@@ -51,8 +51,10 @@ class NitriteProcessor {
 
     @BuildStep
     void reflectiveClasses(BuildProducer<ReflectiveClassBuildItem> reflectiveClasses) {
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(false, false, org.h2.store.fs.FilePathNio.class));
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(true, false, "sun.reflect.ReflectionFactory"));
+        reflectiveClasses.produce(
+                ReflectiveClassBuildItem.builder(org.h2.store.fs.FilePathNio.class).build());
+        reflectiveClasses
+                .produce(ReflectiveClassBuildItem.builder("sun.reflect.ReflectionFactory").methods().build());
 
         String[] dtos = new String[] { NitriteId.class.getName(),
                 Document.class.getName(),

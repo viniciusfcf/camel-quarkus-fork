@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-hdfs-parent</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -32,6 +32,7 @@
 
     <properties>
         <camel.quarkus.jvmSince>1.1.0</camel.quarkus.jvmSince>
+	<quarkus.metadata.deprecated>true</quarkus.metadata.deprecated>
     </properties>
 
     <dependencies>

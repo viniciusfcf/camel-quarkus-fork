@@ -16,34 +16,39 @@
  */
 package org.apache.camel.quarkus.main;
 
-import java.util.Map;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.camel.ExtendedCamelContext;
+import org.apache.camel.ProducerTemplate;
 import org.apache.camel.dsl.yaml.YamlRoutesBuilderLoader;
 import org.apache.camel.spi.RoutesBuilderLoader;
 
-@Path("/test")
+@Path("/main/yaml")
 @ApplicationScoped
 public class CoreMainYamlResource {
     @Inject
     CamelMain main;
 
-    @Path("/main/describe")
+    @Inject
+    ProducerTemplate producerTemplate;
+
+    @Inject
+    GreetingBean myGreetingBean;
+
+    @Path("/describe")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public JsonObject describeMain() {
-        final ExtendedCamelContext camelContext = main.getCamelContext().adapt(ExtendedCamelContext.class);
+        final ExtendedCamelContext camelContext = main.getCamelContext().getCamelContextExtension();
 
         JsonArrayBuilder listeners = Json.createArrayBuilder();
         main.getMainListeners().forEach(listener -> listeners.add(listener.getClass().getName()));
@@ -60,7 +65,28 @@ public class CoreMainYamlResource {
                                 .findClass(YamlRoutesBuilderLoader.EXTENSION).get().getName())
                 .add("routeBuilders", routeBuilders)
                 .add("routes", routes)
-                .add("global-options", Json.createObjectBuilder((Map) main.getCamelContext().getGlobalOptions()).build())
                 .build();
+    }
+
+    @Path("/greet")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String greet(@QueryParam("forceFailure") boolean forceFailure) {
+        return producerTemplate.requestBodyAndHeader("direct:start", null, "forceFailure", forceFailure, String.class);
+    }
+
+    @Path("/try/catch")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String tryCatch() {
+        return producerTemplate.requestBody("direct:tryCatch", null, String.class);
+    }
+
+    @Path("/greet/from/java/bean")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String greetFromBeanDeclaredInJava() {
+        myGreetingBean.setGreeting("Hello from bean declared in java!");
+        return producerTemplate.requestBody("direct:greetFromJavaBean", null, String.class);
     }
 }

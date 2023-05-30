@@ -22,12 +22,10 @@ import java.io.Writer;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
 import io.quarkus.test.QuarkusUnitTest;
+import jakarta.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.component.file.cluster.FileLockClusterService;
-import org.apache.camel.impl.DefaultCamelContext;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.Asset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
@@ -73,11 +71,10 @@ public class FileLockClusterServiceConfigNonDefaultEnabledTest {
 
     @Test
     public void nonDefaultEnabledConfigShouldAutoConfigureWithoutDefaults() {
-
-        DefaultCamelContext dcc = camelContext.adapt(DefaultCamelContext.class);
-        assertNotNull(dcc);
-
-        FileLockClusterService[] flcs = dcc.getServices().stream().filter(s -> s instanceof FileLockClusterService)
+        FileLockClusterService[] flcs = camelContext.getCamelContextExtension()
+                .getServices()
+                .stream()
+                .filter(s -> s instanceof FileLockClusterService)
                 .toArray(FileLockClusterService[]::new);
         assertEquals(1, flcs.length);
 

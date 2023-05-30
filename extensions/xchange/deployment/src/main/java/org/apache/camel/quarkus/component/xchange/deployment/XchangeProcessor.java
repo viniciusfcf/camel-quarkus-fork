@@ -78,7 +78,7 @@ class XchangeProcessor {
             }
         }
 
-        indexedDependency.produce(new IndexDependencyBuildItem("org.jboss.spec.javax.ws.rs", "jboss-jaxrs-api_2.1_spec"));
+        indexedDependency.produce(new IndexDependencyBuildItem("jakarta.ws.rs", "jakarta.ws.rs-api"));
     }
 
     @BuildStep
@@ -89,7 +89,7 @@ class XchangeProcessor {
                 .stream()
                 .map(classInfo -> classInfo.name().toString())
                 .toArray(String[]::new);
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, xchangeClasses));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(xchangeClasses).build());
 
         // DTO classes need to be serialized / deserialized
         final Pattern pattern = Pattern.compile("^org\\.knowm\\.xchange.*dto.*");
@@ -98,7 +98,7 @@ class XchangeProcessor {
                 .map(classInfo -> classInfo.name().toString())
                 .filter(className -> pattern.matcher(className).matches())
                 .toArray(String[]::new);
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, dtoClasses));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(dtoClasses).methods().fields().build());
 
         // rescu REST framework needs reflective access to the value method on some JAX-RS annotations
         String[] jaxrsAnnotations = index.getKnownClasses()
@@ -106,9 +106,9 @@ class XchangeProcessor {
                 .filter(ClassInfo::isAnnotation)
                 .filter(classInfo -> classInfo.firstMethod("value") != null)
                 .map(classInfo -> classInfo.name().toString())
-                .filter(className -> className.startsWith("javax.ws.rs"))
+                .filter(className -> className.startsWith("jakarta.ws.rs"))
                 .toArray(String[]::new);
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, jaxrsAnnotations));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(jaxrsAnnotations).methods().build());
     }
 
     @BuildStep
@@ -116,7 +116,7 @@ class XchangeProcessor {
             CombinedIndexBuildItem combinedIndexBuildItem) {
         // Some xchange libraries use JAX-RS proxies to interact with the exchange APIs so we need to register them
         IndexView index = combinedIndexBuildItem.getIndex();
-        index.getAnnotations(DotName.createSimple("javax.ws.rs.Path"))
+        index.getAnnotations(DotName.createSimple("jakarta.ws.rs.Path"))
                 .stream()
                 .map(AnnotationInstance::target)
                 .filter(target -> target.kind().equals(AnnotationTarget.Kind.CLASS))

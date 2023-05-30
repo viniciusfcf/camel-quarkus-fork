@@ -16,28 +16,22 @@
  */
 package org.apache.camel.quarkus.component.sql.it;
 
-import java.io.File;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import io.agroal.api.AgroalDataSource;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.CamelContext;
 import org.apache.camel.CamelExecutionException;
 import org.apache.camel.ProducerTemplate;
@@ -52,9 +46,6 @@ public class SqlResource {
 
     @ConfigProperty(name = "quarkus.datasource.db-kind")
     String dbKind;
-
-    @Inject
-    AgroalDataSource dataSource;
 
     @Inject
     ProducerTemplate producerTemplate;
@@ -157,34 +148,22 @@ public class SqlResource {
     @Path("/storedproc")
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public String callStoredProcedure(@QueryParam("numA") int numA, @QueryParam("numB") int numB) throws Exception {
+    public String callStoredProcedure(@QueryParam("numA") int numA, @QueryParam("numB") int numB) {
         Map<String, Object> args = new HashMap<>();
         args.put("num1", numA);
         args.put("num2", numB);
 
-        String fileName = null;
-        String url;
-        if ("derby".equals(dbKind)) {
-
-            File f = File.createTempFile("storedProcedureDerby", ".txt", Paths.get("target").toFile());
-            f.deleteOnExit();
-            fileName = f.getName();
-
-            args.put("fileName", fileName);
-
-            url = "sql-stored:ADD_NUMS(INTEGER ${headers.num1},INTEGER ${headers.num2}, CHAR ${headers.fileName})";
-        } else {
-            url = "sql-stored:ADD_NUMS(INTEGER ${headers.num1},INTEGER ${headers.num2})";
-        }
-
-        Map<String, List<LinkedCaseInsensitiveMap>> results = producerTemplate.requestBodyAndHeaders(url, null, args,
-                Map.class);
+        Map<String, List<LinkedCaseInsensitiveMap>> results = producerTemplate
+                .requestBodyAndHeaders("sql-stored:ADD_NUMS(INTEGER ${headers.num1},INTEGER ${headers.num2})", null,
+                        args,
+                        Map.class);
 
         //different db types behaves differently
         switch (dbKind) {
         case "db2":
         case "mssql":
         case "oracle":
+        case "derby":
         case "mariadb":
         case "mysql":
             List<LinkedCaseInsensitiveMap> addNumsResults = producerTemplate.requestBody(
@@ -193,8 +172,6 @@ public class SqlResource {
                     List.class);
 
             return String.valueOf(addNumsResults.get(0).get("value"));
-        case "derby":
-            return Files.readString(Paths.get("target", fileName), StandardCharsets.UTF_8);
         default:
             return results.get("#result-set-1").get(0).values().iterator().next().toString();
         }

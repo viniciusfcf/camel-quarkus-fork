@@ -27,16 +27,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.decorator.Decorator;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.ConversationScoped;
-import javax.enterprise.context.Dependent;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.context.SessionScoped;
-import javax.enterprise.inject.spi.Interceptor;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import io.quarkus.arc.deployment.AnnotationsTransformerBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.arc.processor.AnnotationsTransformer;
@@ -49,6 +39,15 @@ import io.quarkus.deployment.builditem.CapabilityBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.runtime.RuntimeValue;
+import jakarta.decorator.Decorator;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ConversationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.inject.spi.Interceptor;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import org.apache.camel.Consume;
 import org.apache.camel.model.RoutesDefinition;
 import org.apache.camel.quarkus.core.CamelCapabilities;
@@ -171,11 +170,6 @@ public class ConsumeProcessor {
                     }
                     if (annot.value() != null) {
                         uri = annot.value().asString();
-                    } else if (annot.value("uri") != null) {
-                        uri = annot.value("uri").asString();
-                        throw new IllegalArgumentException(String.format("@%s(uri = \"%s\") is not supported on Camel" +
-                                " Quarkus. Please replace it with just @%s(\"%s\").", annot.name().toString(), uri,
-                                annot.name().toString(), uri));
                     } else if (annot.value("property") != null) {
                         runtimeUriOrEndpoint = recorder.getEndpointUri(
                                 camelContext.getCamelContext(),
@@ -261,12 +255,9 @@ public class ConsumeProcessor {
             unremovables.produce(UnremovableBeanBuildItem.beanTypes(declaringClasses));
 
             reflectiveClasses.produce(
-                    new ReflectiveClassBuildItem(
-                            true,
-                            false,
-                            declaringClasses.stream()
-                                    .map(DotName::toString)
-                                    .toArray(String[]::new)));
+                    ReflectiveClassBuildItem.builder(declaringClasses.stream()
+                            .map(DotName::toString)
+                            .toArray(String[]::new)).methods().build());
         }
     }
 

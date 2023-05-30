@@ -21,6 +21,14 @@ import org.apache.camel.builder.RouteBuilder;
 public class Routes extends RouteBuilder {
     @Override
     public void configure() throws Exception {
-        from("direct:start").setBody().constant("Hello World");
+        from("direct:start").routeId("hello").setBody().constant("Hello World");
+
+        from("direct:count").routeId("count")
+                .bean(ManagedCounter.class, "increment").id("counter");
+
+        // This route ensures that a dataformat is available in the context.
+        from("direct:dataformat").routeId("dataformat")
+                .setBody(constant("Hello"))
+                .marshal().json();
     }
 }

@@ -19,6 +19,7 @@ package org.apache.camel.quarkus.component.csimple.it;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.is;
@@ -27,7 +28,7 @@ import static org.hamcrest.Matchers.is;
 class CSimpleTest {
 
     @Test
-    public void csimpleHello() {
+    void csimpleHello() {
         RestAssured.given()
                 .body("Joe")
                 .contentType(ContentType.TEXT)
@@ -37,7 +38,15 @@ class CSimpleTest {
     }
 
     @Test
-    public void csimpleXml() {
+    void csimpleHi() {
+        RestAssured.given()
+                .get("/csimple/csimple-hi")
+                .then()
+                .body(is("Hi Bill"));
+    }
+
+    @Test
+    void csimpleXml() {
         RestAssured.given()
                 .body("Joe")
                 .contentType(ContentType.TEXT)
@@ -46,4 +55,33 @@ class CSimpleTest {
                 .body(is("Hi Joe"));
     }
 
+    @Test
+    void csimpleYaml() {
+        RestAssured.given()
+                .body("John")
+                .contentType(ContentType.TEXT)
+                .post("/csimple/csimple-yaml-dsl")
+                .then()
+                .body(is("Bonjour John"));
+    }
+
+    @Test
+    void csimpleHigh() {
+        RestAssured.given()
+                .body("15")
+                .post("/csimple/predicate")
+                .then()
+                .statusCode(200)
+                .body(CoreMatchers.is("High"));
+    }
+
+    @Test
+    void csimpleLow() {
+        RestAssured.given()
+                .body("3")
+                .post("/csimple/predicate")
+                .then()
+                .statusCode(200)
+                .body(CoreMatchers.is("Low"));
+    }
 }

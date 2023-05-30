@@ -21,9 +21,8 @@ import java.util.Set;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Supplier;
 
-import javax.enterprise.inject.spi.BeanManager;
-
 import io.quarkus.arc.Arc;
+import jakarta.enterprise.inject.spi.BeanManager;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Component;
 import org.apache.camel.Endpoint;
@@ -51,7 +50,7 @@ import org.apache.camel.util.function.Suppliers;
  * Note that this class does not implement all the callback as some notifications them are already covered
  * by management events {@link CamelManagementEventBridge}
  * <p>
- * 
+ *
  * @see ComponentAddEvent
  * @see ComponentRemoveEvent
  * @see EndpointAddEvent
@@ -131,16 +130,6 @@ public class CamelLifecycleEventBridge implements LifecycleStrategy {
         if (observedLifecycleEvents.contains(ServiceAddEvent.class.getName())) {
             fireEvent(new ServiceRemoveEvent(context, service, route));
         }
-    }
-
-    @Override
-    public void onContextStart(CamelContext context) throws VetoCamelContextStartException {
-        // superseded by management events
-    }
-
-    @Override
-    public void onContextStop(CamelContext context) {
-        // superseded by management events
     }
 
     @Override

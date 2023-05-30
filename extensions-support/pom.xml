@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-build-parent</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../poms/build-parent/pom.xml</relativePath>
     </parent>
 
@@ -43,20 +43,20 @@
         <module>commons-logging</module>
         <module>consul-client</module>
         <module>debezium</module>
+        <module>dsl</module>
         <module>google-cloud</module>
         <module>google-http-client</module>
         <module>httpclient</module>
         <module>jackson-dataformat-xml</module>
         <module>jdbc</module>
         <module>jetty</module>
+        <module>language</module>
         <module>mail</module>
         <module>mongodb</module>
         <module>reactor-netty</module>
         <module>retrofit</module>
         <module>spring</module>
-        <module>stax</module>
         <module>webhook</module>
-        <module>xstream</module>
         <module>xalan</module>
     </modules>
 

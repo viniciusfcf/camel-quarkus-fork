@@ -22,6 +22,7 @@ import java.util.Objects;
 
 import org.apache.camel.CatalogCamelContext;
 import org.apache.camel.Component;
+import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.TypeConverter;
 import org.apache.camel.component.microprofile.config.CamelMicroProfilePropertiesSource;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -46,7 +47,6 @@ import org.apache.camel.spi.PropertiesComponent;
 import org.apache.camel.spi.Registry;
 import org.apache.camel.spi.ShutdownStrategy;
 import org.apache.camel.spi.TypeConverterRegistry;
-import org.apache.camel.spi.XMLRoutesDefinitionLoader;
 import org.apache.camel.util.IOHelper;
 
 public class FastCamelContext extends DefaultCamelContext implements CatalogCamelContext, ModelCamelContext {
@@ -59,7 +59,8 @@ public class FastCamelContext extends DefaultCamelContext implements CatalogCame
         this.version = version;
         this.modelDumper = modelDumper;
 
-        setFactoryFinderResolver(factoryFinderResolver);
+        ExtendedCamelContext extendedCamelContext = getCamelContextExtension();
+        extendedCamelContext.addContextPlugin(FactoryFinderResolver.class, factoryFinderResolver);
         setTracing(Boolean.FALSE);
         setDebugging(Boolean.FALSE);
         setMessageHistory(Boolean.FALSE);
@@ -107,7 +108,7 @@ public class FastCamelContext extends DefaultCamelContext implements CatalogCame
     @Override
     protected ComponentNameResolver createComponentNameResolver() {
         // Component names are discovered at build time
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
@@ -119,7 +120,7 @@ public class FastCamelContext extends DefaultCamelContext implements CatalogCame
     @Override
     protected TypeConverterRegistry createTypeConverterRegistry() {
         // TypeConverterRegistry creation is done at build time
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     @Override
@@ -132,12 +133,12 @@ public class FastCamelContext extends DefaultCamelContext implements CatalogCame
     @Override
     protected ModelJAXBContextFactory createModelJAXBContextFactory() {
         // Disabled by default and is provided by the xml-jaxb extension if present on the classpath
-        return new DisabledModelJAXBContextFactory();
+        return null;
     }
 
     protected FactoryFinderResolver createFactoryFinderResolver() {
-        throw new UnsupportedOperationException(
-                "FactoryFinderResolver should have been set in the FastCamelContext constructor");
+        // FactoryFinderResolver is initialized at build time
+        return null;
     }
 
     @Override
@@ -152,11 +153,6 @@ public class FastCamelContext extends DefaultCamelContext implements CatalogCame
         pc.setAutoDiscoverPropertiesSources(true);
         pc.addPropertiesSource(new CamelMicroProfilePropertiesSource());
         return pc;
-    }
-
-    @Override
-    protected XMLRoutesDefinitionLoader createXMLRoutesDefinitionLoader() {
-        return new DisabledXMLRoutesDefinitionLoader();
     }
 
     @Override

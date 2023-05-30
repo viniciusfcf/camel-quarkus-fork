@@ -17,7 +17,6 @@
 package org.apache.camel.quarkus.component.cxf.soap.client.it;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,10 +29,12 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 
 @QuarkusTest
@@ -48,6 +49,7 @@ class CxfSoapClientTest {
                 .queryParam("a", "9")
                 .queryParam("b", "3")
                 .queryParam("endpointUri", endpointUri)
+                .queryParam("operation", "divide")
                 .post("/cxf-soap/client/simple")
                 .then()
                 .statusCode(201)
@@ -80,30 +82,51 @@ class CxfSoapClientTest {
                 .body(equalTo("7"));
     }
 
+    @Test
+    public void basicAuthClient() {
+        RestAssured.given()
+                .queryParam("a", "7")
+                .queryParam("b", "8")
+                .queryParam("endpointUri", "basicAuthAdd")
+                .queryParam("operation", "securedAdd")
+                .post("/cxf-soap/client/simple")
+                .then()
+                .statusCode(201)
+                .body(equalTo("15"));
+    }
+
+    @Test
+    public void basicAuthClientAnonymous() {
+        RestAssured.given()
+                .queryParam("a", "7")
+                .queryParam("b", "8")
+                .queryParam("endpointUri", "basicAuthAddAnonymous")
+                .queryParam("operation", "securedAdd")
+                .post("/cxf-soap/client/simple")
+                .then()
+                .statusCode(500)
+                .body(containsString("HTTP response '401: "));
+    }
+
     /**
-     * Make sure that our static copy is the same as the WSDL served by the container
+     * Make sure that our static copies are the same as the WSDLs served by the container
      *
      * @throws IOException
      */
-    @Test
-    void wsdlUpToDate() throws IOException {
+    @ParameterizedTest
+    @ValueSource(strings = { "CalculatorService", "BasicAuthCalculatorService" })
+    void wsdlUpToDate(String serviceName) throws IOException {
         final String wsdlUrl = ConfigProvider.getConfig()
                 .getValue("camel-quarkus.it.calculator.baseUri", String.class);
 
-        final String wsdlRelPath = "wsdl/CalculatorService.wsdl";
-        final Path staticCopyPath = Paths.get("target/classes/" + wsdlRelPath);
-        if (!Files.isRegularFile(staticCopyPath)) {
-            /* The test is run inside Quarkus Platform
-             * and the resource is not available in the filesystem
-             * So let's copy it */
-            Files.createDirectories(staticCopyPath.getParent());
-            try (InputStream in = getClass().getClassLoader().getResourceAsStream(wsdlRelPath)) {
-                Files.copy(in, staticCopyPath);
-            }
-        }
+        final String wsdlRelPath = "wsdl/" + serviceName + ".wsdl";
+        final Path staticCopyPath = Paths.get("src/main/resources/" + wsdlRelPath);
+        Assumptions.assumeTrue(Files.isRegularFile(staticCopyPath),
+                staticCopyPath + " does not exist - we probably run inside Quarkus Platform");
 
         /* The changing Docker IP address in the WSDL should not matter */
-        final String sanitizerRegex = "<soap:address location=\"http://[^/]*/calculator-ws/CalculatorService\"></soap:address>";
+        final String sanitizerRegex = "<soap:address location=\"http://[^/]*/calculator-ws/" + serviceName
+                + "\"></soap:address>";
         final String staticCopyContent = Files
                 .readString(staticCopyPath, StandardCharsets.UTF_8)
                 .replaceAll(sanitizerRegex, "")
@@ -113,7 +136,7 @@ class CxfSoapClientTest {
                 .replaceAll("\\s", "");
 
         final String expected = RestAssured.given()
-                .get(wsdlUrl + "/calculator-ws/CalculatorService?wsdl")
+                .get(wsdlUrl + "/calculator-ws/" + serviceName + "?wsdl")
                 .then()
                 .statusCode(200)
                 .extract().body().asString();
@@ -121,7 +144,13 @@ class CxfSoapClientTest {
         if (!expected.replaceAll(sanitizerRegex, "").replaceAll("\\s", "").equals(staticCopyContent)) {
             Files.writeString(staticCopyPath, expected, StandardCharsets.UTF_8);
             Assertions.fail("The static WSDL copy in " + staticCopyPath
-                    + " went out of sync with the WSDL served by the container. The content was updated by the test, you just need to review and commit the changes.");
+                    + " went out of sync with the WSDL served by the container. The content was updated by the test, you just need to review and commit the changes.\n"
+                    + "From the container:\n"
+                    + expected.replaceAll(sanitizerRegex, "").replaceAll("\\s", "")
+                    + "\n"
+                    + "In the sources: \n"
+                    + staticCopyContent);
+
         }
 
     }

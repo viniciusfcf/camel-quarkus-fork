@@ -95,11 +95,12 @@ class ShiroProcessor {
         reflectiveClasses.add(URL.class.getName());
         reflectiveClasses.add(URL[].class.getName());
 
-        return new ReflectiveClassBuildItem(false, false, reflectiveClasses.toArray(new String[reflectiveClasses.size()]));
+        return ReflectiveClassBuildItem.builder(reflectiveClasses.toArray(new String[reflectiveClasses.size()]))
+                .build();
     }
 
     @BuildStep
     IndexDependencyBuildItem registerDependencyForIndex() {
-        return new IndexDependencyBuildItem("org.apache.shiro", "shiro-core");
+        return new IndexDependencyBuildItem("org.apache.shiro", "shiro-core", "jakarta");
     }
 }

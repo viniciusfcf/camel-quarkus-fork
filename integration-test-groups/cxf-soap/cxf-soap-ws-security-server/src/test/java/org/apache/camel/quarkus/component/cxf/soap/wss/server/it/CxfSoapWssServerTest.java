@@ -82,7 +82,7 @@ class CxfSoapWssServerTest {
         final String username = config.getValue("camel-quarkus.wss.server.username", String.class);
         final WssRounderService client = rounderClient(username, "fakePassword");
 
-        Assertions.assertThatExceptionOfType(javax.xml.ws.soap.SOAPFaultException.class)
+        Assertions.assertThatExceptionOfType(jakarta.xml.ws.soap.SOAPFaultException.class)
                 .isThrownBy(() -> client.round(2.8))
                 .withMessage(
                         "A security error was encountered when verifying the message");
@@ -119,7 +119,7 @@ class CxfSoapWssServerTest {
     void anonymous() throws IOException {
         final WssRounderService client = QuarkusCxfClientTestUtil.getClient(WssRounderService.class, "/soapservice/rounder");
         /* Make sure that it fails properly when called without a password */
-        Assertions.assertThatExceptionOfType(javax.xml.ws.soap.SOAPFaultException.class)
+        Assertions.assertThatExceptionOfType(jakarta.xml.ws.soap.SOAPFaultException.class)
                 .isThrownBy(() -> client.round(2.8))
                 .withMessage(
                         "A security error was encountered when verifying the message");

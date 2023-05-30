@@ -27,10 +27,6 @@ import java.util.Map;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import javax.xml.crypto.AlgorithmMethod;
 import javax.xml.crypto.KeySelector;
 import javax.xml.crypto.KeySelectorResult;
@@ -42,6 +38,10 @@ import javax.xml.crypto.dsig.spec.XPathType;
 
 import org.w3c.dom.Node;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import org.apache.camel.Message;
 import org.apache.camel.component.xmlsecurity.api.KeyAccessor;
 import org.apache.camel.component.xmlsecurity.api.XmlSignatureHelper;

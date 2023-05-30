@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
@@ -46,6 +45,7 @@ import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.maven.dependency.ArtifactKey;
 import io.quarkus.runtime.RuntimeValue;
+import io.smallrye.common.annotation.Identifier;
 import org.apache.camel.Converter;
 import org.apache.camel.impl.converter.BaseTypeConverterRegistry;
 import org.apache.camel.quarkus.core.CamelCapabilities;
@@ -79,8 +79,6 @@ import org.apache.camel.quarkus.core.deployment.util.PathFilter;
 import org.apache.camel.quarkus.core.util.FileUtils;
 import org.apache.camel.spi.TypeConverterLoader;
 import org.apache.camel.spi.TypeConverterRegistry;
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
@@ -177,7 +175,8 @@ class CamelProcessor {
                 "META-INF/services/org/apache/camel/dataformat/*",
                 "META-INF/services/org/apache/camel/send-dynamic/*",
                 "META-INF/services/org/apache/camel/urifactory/*",
-                "META-INF/services/org/apache/camel/properties-function/*"));
+                "META-INF/services/org/apache/camel/properties-function/*",
+                "META-INF/services/org/apache/camel/health-check/*"));
     }
 
     @BuildStep
@@ -346,14 +345,15 @@ class CamelProcessor {
     }
 
     @BuildStep
-    UnremovableBeanBuildItem unremovableRoutesBuilders() {
-        return new UnremovableBeanBuildItem(
-                b -> b.getTypes().stream().map(Type::name).anyMatch(UNREMOVABLE_BEANS_TYPES::contains));
-    }
+    void unremovableBeans(
+            BuildProducer<AdditionalBeanBuildItem> beanProducer,
+            BuildProducer<UnremovableBeanBuildItem> unremovableBeans) {
 
-    @BuildStep
-    void unremovableBeans(BuildProducer<AdditionalBeanBuildItem> beanProducer) {
         beanProducer.produce(AdditionalBeanBuildItem.unremovableOf(CamelProducers.class));
+
+        unremovableBeans.produce(UnremovableBeanBuildItem.targetWithAnnotation(DotName.createSimple(Identifier.class)));
+        unremovableBeans.produce(new UnremovableBeanBuildItem(
+                b -> b.getTypes().stream().map(Type::name).anyMatch(UNREMOVABLE_BEANS_TYPES::contains)));
     }
 
     @BuildStep(onlyIf = { CamelConfigFlags.RoutesDiscoveryEnabled.class })
@@ -368,28 +368,6 @@ class CamelProcessor {
         allKnownImplementors.addAll(index.getAllKnownImplementors(ROUTES_BUILDER_TYPE));
         allKnownImplementors.addAll(index.getAllKnownSubclasses(ROUTE_BUILDER_TYPE));
         allKnownImplementors.addAll(index.getAllKnownSubclasses(ADVICE_WITH_ROUTE_BUILDER_TYPE));
-
-        Config config = ConfigProvider.getConfig();
-        Optional<List<String>> camelMainRoutesExclude = config.getOptionalValues("camel.main.javaRoutesExcludePattern",
-                String.class);
-        Optional<List<String>> camelMainRoutesInclude = config.getOptionalValues("camel.main.javaRoutesIncludePattern",
-                String.class);
-
-        camelMainRoutesExclude.ifPresent(excludes -> {
-            if (camelConfig.routesDiscovery.excludePatterns.isPresent()) {
-                camelConfig.routesDiscovery.excludePatterns.get().addAll(excludes);
-            } else {
-                camelConfig.routesDiscovery.excludePatterns = Optional.of(excludes);
-            }
-        });
-
-        camelMainRoutesInclude.ifPresent(includes -> {
-            if (camelConfig.routesDiscovery.includePatterns.isPresent()) {
-                camelConfig.routesDiscovery.includePatterns.get().addAll(includes);
-            } else {
-                camelConfig.routesDiscovery.includePatterns = Optional.of(includes);
-            }
-        });
 
         final Predicate<DotName> pathFilter = new PathFilter.Builder()
                 .exclude(

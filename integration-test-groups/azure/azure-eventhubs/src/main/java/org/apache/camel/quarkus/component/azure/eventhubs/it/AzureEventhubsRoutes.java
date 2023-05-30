@@ -18,9 +18,8 @@ package org.apache.camel.quarkus.component.azure.eventhubs.it;
 
 import java.util.Optional;
 
-import javax.enterprise.context.ApplicationScoped;
-
 import com.azure.core.amqp.AmqpTransportType;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.camel.builder.RouteBuilder;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -50,7 +49,7 @@ public class AzureEventhubsRoutes extends RouteBuilder {
                     + ")&blobAccessKey=RAW(" + azureStorageAccountKey
                     + ")&blobContainerName=RAW(" + azureBlobContainerName.get() + ")&amqpTransportType="
                     + AmqpTransportType.AMQP)
-                            .to("mock:azure-consumed");
+                    .to("mock:azure-consumed");
         } else if (!startMockBackend) {
             throw new IllegalStateException(
                     "azure.event.hubs.connection.string and azure.event.hubs.blob.container.name must be set when camel.quarkus.start.mock.backend == false");

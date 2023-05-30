@@ -51,12 +51,12 @@ public class BouncyCastleSupportProcessor {
                         n.startsWith("org.bouncycastle.jcajce.provider.keystore."))
                 .toArray(String[]::new);
 
-        return new ReflectiveClassBuildItem(false, false, dtos);
+        return ReflectiveClassBuildItem.builder(dtos).build();
     }
 
     @BuildStep
     IndexDependencyBuildItem registerBCDependencyForIndex() {
-        return new IndexDependencyBuildItem("org.bouncycastle", "bcprov-jdk15on");
+        return new IndexDependencyBuildItem("org.bouncycastle", "bcprov-jdk18on");
     }
 
     @BuildStep

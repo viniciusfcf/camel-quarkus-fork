@@ -16,15 +16,13 @@
  */
 package org.apache.camel.quarkus.component.headersmap.it;
 
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.CamelContext;
-import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.component.headersmap.FastHeadersMapFactory;
 import org.apache.camel.spi.HeadersMapFactory;
 
@@ -38,7 +36,7 @@ public class HeadersmapResource {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response verifyHeadersMapFactory() throws Exception {
-        HeadersMapFactory factory = context.adapt(ExtendedCamelContext.class).getHeadersMapFactory();
+        HeadersMapFactory factory = context.getCamelContextExtension().getHeadersMapFactory();
         return Response.ok().entity(factory instanceof FastHeadersMapFactory).build();
     }
 }

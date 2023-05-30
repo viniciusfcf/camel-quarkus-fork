@@ -16,14 +16,14 @@
  */
 package org.apache.camel.quarkus.component.csimple.it;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.camel.ProducerTemplate;
 
 @Path("/csimple")
@@ -41,11 +41,33 @@ public class CSimpleResource {
         return producerTemplate.requestBody("direct:csimple-hello", body, String.class);
     }
 
+    @GET
+    @Path("/csimple-hi")
+    public String hi() {
+        return producerTemplate.requestBody("direct:csimple-hi", null, String.class);
+    }
+
     @Path("/csimple-xml-dsl")
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     public String csimpleXmlDsl(String body) {
         return producerTemplate.requestBody("direct:csimple-xml-dsl", body, String.class);
+    }
+
+    @Path("/csimple-yaml-dsl")
+    @POST
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String csimpleYamlDsl(String body) {
+        return producerTemplate.requestBody("direct:csimple-yaml-dsl", body, String.class);
+    }
+
+    @POST
+    @Path("/predicate")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String predicate(String message) {
+        return producerTemplate.requestBody("direct:predicate", message, String.class);
     }
 }

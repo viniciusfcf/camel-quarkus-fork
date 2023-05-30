@@ -31,6 +31,7 @@ import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import org.apache.camel.component.quartz.QuartzComponent;
 import org.apache.camel.quarkus.component.quartz.CamelQuartzRecorder;
 import org.apache.camel.quarkus.core.deployment.spi.CamelBeanBuildItem;
+import org.apache.camel.quarkus.core.deployment.spi.CamelContextCustomizerBuildItem;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 import org.quartz.impl.jdbcjobstore.StdJDBCDelegate;
@@ -64,12 +65,12 @@ class QuartzProcessor {
 
     @BuildStep
     ReflectiveClassBuildItem registerForReflection() {
-        return new ReflectiveClassBuildItem(false, false, QUARTZ_JOB_CLASSES);
+        return ReflectiveClassBuildItem.builder(QUARTZ_JOB_CLASSES).build();
     }
 
     @BuildStep
     ReflectiveClassBuildItem registerForReflectionWithMethods() {
-        return new ReflectiveClassBuildItem(true, false, QUARTZ_JOB_CLASSES_WITH_METHODS);
+        return ReflectiveClassBuildItem.builder(QUARTZ_JOB_CLASSES_WITH_METHODS).methods().build();
     }
 
     @BuildStep
@@ -88,7 +89,7 @@ class QuartzProcessor {
                 .filter(n -> oracleBlobIsPresent || !n.contains("oracle"))
                 .toArray(String[]::new);
 
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(false, true, delegatesImpl));
+        reflectiveClasses.produce(ReflectiveClassBuildItem.builder(delegatesImpl).fields().build());
     }
 
     @BuildStep
@@ -111,4 +112,9 @@ class QuartzProcessor {
                 recorder.createQuartzComponent());
     }
 
+    @Record(ExecutionTime.STATIC_INIT)
+    @BuildStep
+    CamelContextCustomizerBuildItem createQuartzAutowiredLifecycleStrategyContextCustomizer(CamelQuartzRecorder recorder) {
+        return new CamelContextCustomizerBuildItem(recorder.createQuartzAutowiredLifecycleStrategy());
+    }
 }

@@ -16,37 +16,36 @@
  */
 package org.apache.camel.quarkus.component.fhir.deployment;
 
+import java.lang.reflect.Modifier;
+import java.util.function.BooleanSupplier;
+
 import ca.uhn.fhir.rest.client.apache.ApacheRestfulClientFactory;
 import ca.uhn.fhir.rest.client.api.IClientInterceptor;
 import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
-import ca.uhn.fhir.rest.server.interceptor.CaptureResourceSourceFromHeaderInterceptor;
-import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
-import ca.uhn.fhir.rest.server.interceptor.ResponseValidatingInterceptor;
-import ca.uhn.fhir.rest.server.interceptor.auth.AuthorizationInterceptor;
-import ca.uhn.fhir.rest.server.interceptor.auth.SearchNarrowingInterceptor;
-import ca.uhn.fhir.rest.server.interceptor.consent.ConsentInterceptor;
 import ca.uhn.fhir.util.jar.DependencyLogImpl;
 import ca.uhn.fhir.validation.schematron.SchematronBaseValidator;
+import io.quarkus.deployment.GeneratedClassGizmoAdaptor;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.AdditionalApplicationArchiveMarkerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.GeneratedClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBundleBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.deployment.pkg.steps.NativeBuild;
+import io.quarkus.gizmo.ClassCreator;
+import io.quarkus.gizmo.Gizmo;
+import io.quarkus.gizmo.MethodCreator;
+import org.apache.camel.quarkus.component.fhir.IsSchematronAbsent;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
 
 final class FhirProcessor {
     private static final String FEATURE = "camel-fhir";
+    private static final String RESTFUL_SERVER_UTILS_CLASS_NAME = "ca.uhn.fhir.rest.server.RestfulServerUtils";
     private static final String[] INTERCEPTOR_CLASSES = {
-            ConsentInterceptor.class.getName(),
-            SearchNarrowingInterceptor.class.getName(),
-            AuthorizationInterceptor.class.getName(),
-            ResponseValidatingInterceptor.class.getName(),
-            ResponseHighlighterInterceptor.class.getName(),
-            CaptureResourceSourceFromHeaderInterceptor.class.getName(),
             IClientInterceptor.class.getName(),
     };
 
@@ -83,7 +82,8 @@ final class FhirProcessor {
         IndexView index = combinedIndex.getIndex();
         index.getAllKnownSubclasses(DotName.createSimple(BaseServerResponseException.class.getName()))
                 .stream()
-                .map(classInfo -> new ReflectiveClassBuildItem(false, false, classInfo.name().toString()))
+                .map(classInfo -> ReflectiveClassBuildItem.builder(classInfo.name().toString())
+                        .build())
                 .forEach(reflectiveClass::produce);
 
         String[] clientInterceptors = index.getAllKnownImplementors(DotName.createSimple(IClientInterceptor.class.getName()))
@@ -91,11 +91,60 @@ final class FhirProcessor {
                 .map(classInfo -> classInfo.name().toString())
                 .toArray(String[]::new);
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, clientInterceptors));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, INTERCEPTOR_CLASSES));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, true, SchematronBaseValidator.class));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, true, DependencyLogImpl.class));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true, ApacheRestfulClientFactory.class));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(clientInterceptors).methods().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(INTERCEPTOR_CLASSES).methods().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(DependencyLogImpl.class)
+                .fields().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(ApacheRestfulClientFactory.class)
+                .methods().fields().build());
     }
 
+    @BuildStep(onlyIfNot = IsSchematronAbsent.class)
+    void registerSchematronForReflection(BuildProducer<ReflectiveClassBuildItem> reflectiveClass) {
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(SchematronBaseValidator.class)
+                .fields().build());
+    }
+
+    @BuildStep(onlyIf = { NativeBuild.class, IsFhirServerAbsent.class })
+    void generateRestfulServerUtils(BuildProducer<GeneratedClassBuildItem> generatedClass) {
+        // Avoid having redundant hapi-fhir-server on the classpath and generate RestfulServerUtils.createEtag to satisfy native compilation.
+        try (ClassCreator classCreator = ClassCreator.builder()
+                .className(RESTFUL_SERVER_UTILS_CLASS_NAME)
+                .classOutput(new GeneratedClassGizmoAdaptor(generatedClass, false))
+                .setFinal(true)
+                .superClass(Object.class.getName())
+                .build()) {
+
+            /*
+             * Original implementation of createETag is:
+             *
+             * 	public static String createEtag(String theVersionId) {
+             * 		return "W/\"" + theVersionId + '"';
+             *  }
+             */
+            try (MethodCreator methodCreator = classCreator.getMethodCreator("createEtag", String.class, String.class)) {
+                methodCreator.setModifiers(Modifier.PUBLIC | Modifier.STATIC);
+
+                Gizmo.StringBuilderGenerator stringBuilder = Gizmo.newStringBuilder(methodCreator);
+                stringBuilder.append("W/");
+                stringBuilder.append('"');
+                stringBuilder.append(methodCreator.getMethodParam(0));
+                stringBuilder.append('"');
+
+                methodCreator.returnValue(stringBuilder.callToString());
+            }
+        }
+    }
+
+    static final class IsFhirServerAbsent implements BooleanSupplier {
+        @Override
+        public boolean getAsBoolean() {
+            try {
+                Class.forName(RESTFUL_SERVER_UTILS_CLASS_NAME);
+                return false;
+            } catch (ClassNotFoundException e) {
+                return true;
+            }
+        }
+    }
 }

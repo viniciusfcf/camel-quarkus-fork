@@ -20,28 +20,28 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Singleton;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.stream.JsonParser;
-
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.stream.JsonParser;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.catalog.RuntimeCamelCatalog;
 import org.apache.camel.spi.ComponentNameResolver;
+import org.apache.camel.support.PluginHelper;
 
 public class MessagingComponentSchemeProducer {
 
     @Produces
     @Singleton
     public ComponentScheme getMessagingComponentScheme(CamelContext camelContext) {
-        ExtendedCamelContext context = camelContext.getExtension(ExtendedCamelContext.class);
+        ExtendedCamelContext context = camelContext.getCamelContextExtension();
         RuntimeCamelCatalog catalog = context.getRuntimeCamelCatalog();
-        ComponentNameResolver resolver = context.getComponentNameResolver();
+        ComponentNameResolver resolver = PluginHelper.getComponentNameResolver(context);
         List<JsonObject> schemas = new ArrayList<>();
 
-        for (String name : resolver.resolveNames(context)) {
+        for (String name : resolver.resolveNames(camelContext)) {
             // Catalog is hard coded to return the JSON schema for the JMS component so just assume activemq is the component to work with
             if (name.equals("activemq")) {
                 return new ComponentScheme("activemq");

@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-build-parent</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../poms/build-parent/pom.xml</relativePath>
     </parent>
 
@@ -84,19 +84,6 @@
         </dependency>
 
         <!-- The following dependencies guarantee that this module is built after them. You can update them by running `mvn process-resources -Pformat -N` from the source tree root directory -->
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-activemq</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-amqp</artifactId>
@@ -177,19 +164,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-atmos</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-atom</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -217,19 +191,6 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-avro</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-avro-rpc</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -736,19 +697,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-caffeine-lrucache</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-cassandraql</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -801,6 +749,19 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-cli-connector</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-cloudevents</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -827,19 +788,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-cmis</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-coap</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -854,6 +802,19 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-cometd</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-console</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -1191,19 +1152,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-dozer</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-drill</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -1256,7 +1204,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-elasticsearch-rest</artifactId>
+            <artifactId>camel-quarkus-elasticsearch</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -1698,19 +1646,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-hbase</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-hdfs</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -1751,6 +1686,19 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-http</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-http-common</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -1841,7 +1789,46 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-iota</artifactId>
+            <artifactId>camel-quarkus-integration-tests-support-custom-log-component</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-integration-tests-support-custom-main-listener</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-integration-tests-support-custom-routes-collector</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-integration-tests-support-custom-type-converter</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -1958,33 +1945,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-jbpm</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-jcache</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-jclouds</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -2088,19 +2049,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-johnzon</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-jolt</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -2180,6 +2128,19 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-jsch</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-jsh-dsl</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -2569,6 +2530,19 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-mapstruct</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-master</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -2609,32 +2583,6 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-microprofile-health</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-microprofile-metrics</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-milo</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -2881,32 +2829,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-opentracing</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-optaplanner</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-paho</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -3064,19 +2986,6 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-qute</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-rabbitmq</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -3362,19 +3271,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-smallrye-reactive-messaging</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-smpp</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -3415,19 +3311,6 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-soap</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-solr</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -3687,6 +3570,19 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-support-dsl</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-support-google-cloud</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -3753,6 +3649,19 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-support-jetty</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-support-language</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -3843,19 +3752,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-support-stax</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-support-webhook</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -3870,19 +3766,6 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-support-xalan</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-support-xstream</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>
@@ -4090,19 +3973,6 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-vm</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-weather</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
@@ -4273,19 +4143,6 @@
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-xslt-saxon</artifactId>
-            <version>${project.version}</version>
-            <type>pom</type>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel.quarkus</groupId>
-            <artifactId>camel-quarkus-xstream</artifactId>
             <version>${project.version}</version>
             <type>pom</type>
             <scope>test</scope>

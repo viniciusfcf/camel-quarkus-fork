@@ -38,11 +38,15 @@ class JsonPathProcessor {
     @BuildStep
     List<ReflectiveClassBuildItem> registerReflectiveClassBuildItems() {
         List<ReflectiveClassBuildItem> reflectiveClassBuildItems = new ArrayList<>();
-        reflectiveClassBuildItems.add(new ReflectiveClassBuildItem(false, false, JsonPathAnnotationExpressionFactory.class));
-        reflectiveClassBuildItems.add(new ReflectiveClassBuildItem(true, false, JsonPath.class));
-        reflectiveClassBuildItems.add(new ReflectiveClassBuildItem(false, false, JacksonJsonAdapter.class));
+        reflectiveClassBuildItems.add(ReflectiveClassBuildItem.builder(JsonPathAnnotationExpressionFactory.class)
+                .build());
+        reflectiveClassBuildItems.add(ReflectiveClassBuildItem.builder(JsonPath.class).methods().build());
         reflectiveClassBuildItems
-                .add(new ReflectiveClassBuildItem(false, false, "com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule"));
+                .add(ReflectiveClassBuildItem.builder(JacksonJsonAdapter.class).build());
+        reflectiveClassBuildItems
+                .add(ReflectiveClassBuildItem
+                        .builder("com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule")
+                        .build());
 
         return reflectiveClassBuildItems;
     }

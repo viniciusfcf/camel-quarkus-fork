@@ -22,6 +22,7 @@ import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.AdviceWith;
 import org.apache.camel.builder.AdviceWithRouteBuilder;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.model.Model;
 import org.apache.camel.quarkus.test.CamelQuarkusTestSupport;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,8 @@ public class SimpleWeaveAddMockLastTest extends CamelQuarkusTestSupport {
 
     @Test
     public void testWeaveAddMockLast() throws Exception {
-        AdviceWith.adviceWith(context.getExtension(Model.class).getRouteDefinitions().get(0), context,
+        AdviceWith.adviceWith(context.getCamelContextExtension().getContextPlugin(Model.class).getRouteDefinitions().get(0),
+                context,
                 new AdviceWithRouteBuilder() {
                     @Override
                     public void configure() {
@@ -49,7 +51,7 @@ public class SimpleWeaveAddMockLastTest extends CamelQuarkusTestSupport {
 
         template.sendBody("seda:start", "Camel");
 
-        assertMockEndpointsSatisfied();
+        MockEndpoint.assertIsSatisfied(context);
     }
 
     @Override

@@ -19,19 +19,21 @@ package org.apache.camel.quarkus.component.telegram.it;
 import java.net.URI;
 import java.util.Arrays;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.apache.camel.CamelContext;
 import org.apache.camel.ConsumerTemplate;
+import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
+import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.component.telegram.TelegramConstants;
 import org.apache.camel.component.telegram.TelegramMediaType;
 import org.apache.camel.component.telegram.model.EditMessageLiveLocationMessage;
@@ -55,6 +57,9 @@ public class TelegramResource {
 
     @Inject
     ConsumerTemplate consumerTemplate;
+
+    @Inject
+    CamelContext context;
 
     @ConfigProperty(name = "telegram.chatId")
     String chatId;
@@ -179,6 +184,17 @@ public class TelegramResource {
                 .created(new URI(String.format("https://telegram.org/")))
                 .entity(result)
                 .build();
+    }
+
+    @Path("/webhook")
+    @Produces(MediaType.TEXT_PLAIN)
+    @GET
+    public String webhookMessages() {
+        final MockEndpoint mockEndpoint = context.getEndpoint("mock:webhook", MockEndpoint.class);
+        return mockEndpoint.getReceivedExchanges().stream()
+                .map(Exchange::getMessage)
+                .map(m -> m.getBody(String.class))
+                .findFirst().orElse("");
     }
 
 }

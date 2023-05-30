@@ -19,8 +19,7 @@ package org.apache.camel.quarkus.component.grpc.deployment;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.List;
-
-import javax.enterprise.context.Dependent;
+import java.util.Optional;
 
 import io.grpc.BindableService;
 import io.grpc.stub.AbstractAsyncStub;
@@ -41,6 +40,7 @@ import io.quarkus.gizmo.FieldCreator;
 import io.quarkus.gizmo.MethodCreator;
 import io.quarkus.gizmo.MethodDescriptor;
 import io.quarkus.gizmo.ResultHandle;
+import jakarta.enterprise.context.Dependent;
 import org.apache.camel.component.grpc.server.GrpcMethodHandler;
 import org.apache.camel.quarkus.grpc.runtime.CamelQuarkusBindableService;
 import org.apache.camel.quarkus.grpc.runtime.QuarkusBindableServiceFactory;
@@ -74,10 +74,12 @@ class GrpcProcessor {
         for (DotName dotName : STUB_CLASS_DOT_NAMES) {
             index.getAllKnownSubclasses(dotName)
                     .stream()
-                    .map(classInfo -> new ReflectiveClassBuildItem(true, false, classInfo.name().toString()))
+                    .map(classInfo -> ReflectiveClassBuildItem.builder(classInfo.name().toString()).methods()
+                            .build())
                     .forEach(reflectiveClass::produce);
         }
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, AbstractStub.class.getName()));
+        reflectiveClass
+                .produce(ReflectiveClassBuildItem.builder(AbstractStub.class.getName()).methods().build());
     }
 
     @BuildStep
@@ -101,6 +103,7 @@ class GrpcProcessor {
             if (!Modifier.isAbstract(service.flags())) {
                 continue;
             }
+
             if (service.name().withoutPackagePrefix().startsWith("Mutiny")) {
                 /* The generate-code goal of quarkus-maven-plugin generates also Mutiny service that we do not use
                  * Not skipping it here results in randomly registering the Mutiny one or the right one.
@@ -109,13 +112,24 @@ class GrpcProcessor {
                 continue;
             }
 
+            Optional<String> asyncServiceInterface = service.interfaceNames()
+                    .stream()
+                    .map(DotName::toString)
+                    .filter(className -> className.endsWith("AsyncService"))
+                    .findFirst();
+            if (asyncServiceInterface.isEmpty()) {
+                continue;
+            }
+
             String superClassName = service.name().toString();
             String generatedClassName = superClassName + "QuarkusMethodHandler";
 
             // Register the service classes for reflection
-            reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, service.name().toString()));
-            reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, service.enclosingClass().toString()));
-            reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, generatedClassName));
+            reflectiveClass
+                    .produce(ReflectiveClassBuildItem.builder(service.name().toString()).methods().build());
+            reflectiveClass.produce(
+                    ReflectiveClassBuildItem.builder(service.enclosingClass().toString()).methods().build());
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(generatedClassName).methods().build());
 
             try (ClassCreator classCreator = ClassCreator.builder()
                     .classOutput(new GeneratedBeanGizmoAdaptor(generatedBean))
@@ -153,7 +167,8 @@ class GrpcProcessor {
 
                 // Override service methods that the gRPC component is interested in
                 // E.g methods with one or two parameters where one is of type StreamObserver
-                List<MethodInfo> methods = service.methods();
+                ClassInfo asyncServiceClassInfo = index.getClassByName(asyncServiceInterface.get());
+                List<MethodInfo> methods = asyncServiceClassInfo.methods();
                 for (MethodInfo method : methods) {
                     if (isCandidateServiceMethod(method)) {
                         String[] params = method.parameters()

@@ -16,12 +16,17 @@
  */
 package org.apache.camel.quarkus.performance.regression;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 import org.apache.commons.io.FileUtils;
@@ -56,6 +61,10 @@ public class PerfRegressionCommand implements Runnable {
             "--also-run-native-mode" }, description = "Tells whether the throughput test should also be run in native mode. By default, run in JVM mode only.")
     private boolean alsoRunNativeMode;
 
+    @Option(names = { "-umnb",
+            "--use-mandrel-native-builder" }, description = "Tells whether mandrel should be used to build native images. Can be used with camel-quarkus >= 2.8.0 only.")
+    private boolean useMandrelNativeBuilder;
+
     @Override
     public void run() {
         PerformanceRegressionReport report = new PerformanceRegressionReport(singleScenarioDuration);
@@ -69,7 +78,18 @@ public class PerfRegressionCommand implements Runnable {
                 runPerfRegressionForCqVersion(cqVersionsUnderTestFolder.resolve(cqVersion), cqVersion, report);
             }
 
-            System.out.println(report.printAll());
+            String reportString = report.printAll();
+            System.out.println(reportString);
+
+            try {
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss's'");
+                String date = dateFormat.format(new Date());
+                File reportFile = Paths.get("perf-regression-report@" + date + ".txt").toFile();
+                FileUtils.writeStringToFile(reportFile, reportString, StandardCharsets.UTF_8);
+            } catch (IOException ioex) {
+                throw new RuntimeException(
+                        "An issue has been caught while trying to write the performance regression report to a file.", ioex);
+            }
         } catch (IOException | XmlPullParserException e) {
             throw new RuntimeException("An issue has been caught while trying to setup performance regression tests.", e);
         }
@@ -84,19 +104,24 @@ public class PerfRegressionCommand implements Runnable {
         FileEditionHelper.instantiatePomFile(cqVersionUnderTestFolder, cqVersion, cqStagingRepository, camelStagingRepository);
 
         // Locally sets the right maven version in the maven wrapper
-        // camel-quarkus >= 2.6.0.CR1 => maven 3.8.4
-        // camel-quarkus >= 2.1.0     => maven 3.8.1
+        // camel-quarkus >= 2.11.0.CR1 => maven 3.8.6
+        // camel-quarkus >= 2.6.0.CR1  => maven 3.8.4
+        // camel-quarkus >= 2.1.0      => maven 3.8.1
         String targetMavenVersion = getTargetMavenVersion(cqVersionUnderTestFolder);
         setMvnwMavenVersion(cqVersionUnderTestFolder, targetMavenVersion);
 
         // Run performance regression test in JVM mode
-        double jvmThroughput = runPerfRegression(cqVersionUnderTestFolder, "integration-test");
+        double jvmThroughput = runPerfRegression(cqVersionUnderTestFolder, "integration-test -Denforcer.skip=true");
         report.setCategoryMeasureForVersion(cqVersion, "JVM", jvmThroughput);
 
         // Run performance regression test in native mode
         if (alsoRunNativeMode) {
-            double nativeThroughput = runPerfRegression(cqVersionUnderTestFolder,
-                    "integration-test -Dnative -Dquarkus.native.container-build=true");
+            String nativeCommandArgs = "integration-test -Dnative -Dquarkus.native.container-build=true -Denforcer.skip=true";
+            if (useMandrelNativeBuilder) {
+                nativeCommandArgs += " -Dquarkus.native.builder-image=mandrel";
+            }
+            double nativeThroughput = runPerfRegression(cqVersionUnderTestFolder, nativeCommandArgs);
+
             report.setCategoryMeasureForVersion(cqVersion, "Native", nativeThroughput);
         }
     }

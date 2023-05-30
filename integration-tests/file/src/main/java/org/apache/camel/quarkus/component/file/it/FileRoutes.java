@@ -16,8 +16,7 @@
  */
 package org.apache.camel.quarkus.component.file.it;
 
-import javax.enterprise.context.ApplicationScoped;
-
+import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.file.GenericFile;
 import org.apache.camel.component.file.GenericFileFilter;
@@ -43,17 +42,17 @@ public class FileRoutes extends RouteBuilder {
                 + "readLockCheckInterval=2000&"
                 + "readLockLoggingLevel=TRACE&"
                 + "readLockTimeout=5000")
-                        .to("file://target/" + READ_LOCK_OUT);
+                .to("file://target/" + READ_LOCK_OUT);
 
         from("file://target/quartz?scheduler=quartz&scheduler.cron=0/1+*+*+*+*+?&repeatCount=0")
                 .to("file://target/quartz/out");
 
         from("file://target/" + CONSUME_BATCH + "?"
                 + "initialDelay=0&delay=100")
-                        .id(CONSUME_BATCH)
-                        .noAutoStartup()
-                        .convertBodyTo(String.class)
-                        .to("mock:" + CONSUME_BATCH);
+                .id(CONSUME_BATCH)
+                .noAutoStartup()
+                .convertBodyTo(String.class)
+                .to("mock:" + CONSUME_BATCH);
 
         from("file://target/charsetIsoRead?initialDelay=0&delay=10&delete=true&charset=ISO-8859-1")
                 .routeId("charsetIsoRead")

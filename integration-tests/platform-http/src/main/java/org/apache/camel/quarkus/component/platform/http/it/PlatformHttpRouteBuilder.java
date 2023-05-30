@@ -22,10 +22,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.activation.DataHandler;
-
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.vertx.http.runtime.security.QuarkusHttpUser;
+import jakarta.activation.DataHandler;
 import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.attachment.AttachmentMessage;
@@ -146,6 +145,17 @@ public class PlatformHttpRouteBuilder extends RouteBuilder {
         from("platform-http:/platform-http/empty-string-200")
                 .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
                 .setBody().constant("");
+
+        from("platform-http:/empty/header")
+                .process(exchange -> {
+                    Message message = exchange.getMessage();
+                    String header = message.getHeader("my-header", String.class);
+                    if (header != null) {
+                        message.setBody("Header length was " + header.length());
+                    } else {
+                        message.setBody("Header was not present");
+                    }
+                });
 
         // Path parameters
         rest()

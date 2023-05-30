@@ -26,12 +26,14 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.functions.SystemFunction;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.logging.Logger;
+import org.xmlresolver.loaders.XmlLoader;
 
 class SaxonProcessor {
 
@@ -48,25 +50,32 @@ class SaxonProcessor {
             CombinedIndexBuildItem index) {
 
         // Needed to register default object models when initializing the net.sf.saxon.java.JavaPlatform
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(false, false, Document.class));
+        reflectiveClasses.produce(ReflectiveClassBuildItem.builder(Document.class).build());
+        reflectiveClasses.produce(ReflectiveClassBuildItem.builder(XmlLoader.class).build());
 
         // Register saxon functions as reflective
         Collection<ClassInfo> cis = index.getIndex()
                 .getAllKnownSubclasses(DotName.createSimple(SystemFunction.class.getName()));
         cis.stream().forEach(ci -> {
             String clazzName = ci.asClass().name().toString();
-            ReflectiveClassBuildItem clazz = new ReflectiveClassBuildItem(false, false, clazzName);
+            ReflectiveClassBuildItem clazz = ReflectiveClassBuildItem.builder(clazzName).build();
             LOG.debugf("Registering saxon function '%s' as reflective", clazzName);
             reflectiveClasses.produce(clazz);
         });
 
         // Needed for xpath expression with saxon
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(false, false, Configuration.class));
-        reflectiveClasses.produce(new ReflectiveClassBuildItem(false, false, XPathFactoryImpl.class));
+        reflectiveClasses.produce(ReflectiveClassBuildItem.builder(Configuration.class).build());
+        reflectiveClasses
+                .produce(ReflectiveClassBuildItem.builder(XPathFactoryImpl.class).build());
     }
 
     @BuildStep
     void indexSaxonHe(BuildProducer<IndexDependencyBuildItem> deps) {
         deps.produce(new IndexDependencyBuildItem("net.sf.saxon", "Saxon-HE"));
+    }
+
+    @BuildStep
+    void runtimeInit(BuildProducer<RuntimeInitializedClassBuildItem> deps) {
+        deps.produce(new RuntimeInitializedClassBuildItem("org.apache.hc.client5.http.impl.auth.NTLMEngineImpl"));
     }
 }

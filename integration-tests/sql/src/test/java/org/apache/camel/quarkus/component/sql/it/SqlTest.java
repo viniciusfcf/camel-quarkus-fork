@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -31,13 +32,13 @@ import org.hamcrest.Matcher;
 import org.hamcrest.collection.IsMapContaining;
 import org.hamcrest.text.IsEqualIgnoringCase;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIf;
 
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
+@QuarkusTestResource(DerbyTestResource.class)
 class SqlTest {
 
     @Test
@@ -70,13 +71,9 @@ class SqlTest {
                 .body(is("Dromedarius 1"));
     }
 
-    public boolean storedProcedureDisabled() {
-        return "derby".equals(System.getProperty("cq.sqlJdbcKind")) && System.getenv().containsKey("SQL_JDBC_URL");
-    }
-
     @Test
-    @DisabledIf("storedProcedureDisabled")
     public void testSqlStoredComponent() {
+
         // Invoke ADD_NUMS stored procedure
         RestAssured.given()
                 .queryParam("numA", 10)
@@ -110,7 +107,7 @@ class SqlTest {
         postMapWithParam("/sql/insert",
                 "table", "projects" + via,
                 project)
-                        .statusCode(201);
+                .statusCode(201);
 
         //wait for the record to be caught
         await().atMost(30, TimeUnit.SECONDS).until(() -> (Iterable<Object>) RestAssured
@@ -121,7 +118,7 @@ class SqlTest {
         postMapWithParam("/sql/update",
                 "table", "projects" + via,
                 updatedProject)
-                        .statusCode(201);
+                .statusCode(201);
 
         //wait for the record to be caught
         await().atMost(30, TimeUnit.SECONDS).until(() -> (Iterable<Object>) RestAssured
@@ -135,23 +132,23 @@ class SqlTest {
         postMap("/sql/toDirect/transacted", CollectionHelper.mapOf(SqlConstants.SQL_QUERY,
                 "insert into projectsViaSql values (5, 'Transacted', 'ASF', BOOLEAN_FALSE)",
                 "rollback", false))
-                        .statusCode(204);
+                .statusCode(204);
 
         postMap("/sql/toDirect/transacted", CollectionHelper.mapOf(SqlConstants.SQL_QUERY,
                 "select * from projectsViaSql where project = 'Transacted'"))
-                        .statusCode(200)
-                        .body("size()", is(1));
+                .statusCode(200)
+                .body("size()", is(1));
 
         postMap("/sql/toDirect/transacted", CollectionHelper.mapOf(SqlConstants.SQL_QUERY,
                 "insert into projectsViaSql values (6, 'Transacted', 'ASF', BOOLEAN_FALSE)",
                 "rollback", true))
-                        .statusCode(200)
-                        .body(is("java.lang.Exception:forced Exception"));
+                .statusCode(200)
+                .body(is("java.lang.Exception:forced Exception"));
 
         postMap("/sql/toDirect/transacted",
                 CollectionHelper.mapOf(SqlConstants.SQL_QUERY, "select * from projectsViaSql where project = 'Transacted'"))
-                        .statusCode(200)
-                        .body("size()", is(1));
+                .statusCode(200)
+                .body("size()", is(1));
     }
 
     @Test
@@ -168,25 +165,25 @@ class SqlTest {
         postMapWithParam("/sql/toDirect/idempotent",
                 "body", "one",
                 CollectionHelper.mapOf("messageId", "1"))
-                        .statusCode(200);
+                .statusCode(200);
 
         // add value with key 2
         postMapWithParam("/sql/toDirect/idempotent",
                 "body", "two",
                 CollectionHelper.mapOf("messageId", "2"))
-                        .statusCode(200);
+                .statusCode(200);
 
         // add same value with key 3
         postMapWithParam("/sql/toDirect/idempotent",
                 "body", "three",
                 CollectionHelper.mapOf("messageId", "3"))
-                        .statusCode(200);
+                .statusCode(200);
 
         // add another value with key 1 -- this one is supposed to be skipped
         postMapWithParam("/sql/toDirect/idempotent",
                 "body", "four",
                 CollectionHelper.mapOf("messageId", "1"))
-                        .statusCode(200);
+                .statusCode(200);
 
         // get all values from the result map
         await().atMost(5, TimeUnit.SECONDS).until(() -> (Iterable<? extends String>) RestAssured

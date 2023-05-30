@@ -56,8 +56,8 @@ class KnativeProcessor {
     @BuildStep
     List<ReflectiveClassBuildItem> reflectiveClasses() {
         return List.of(
-                new ReflectiveClassBuildItem(true, false, KnativeEnvironment.class),
-                new ReflectiveClassBuildItem(true, false, KnativeResource.class));
+                ReflectiveClassBuildItem.builder(KnativeEnvironment.class).methods().build(),
+                ReflectiveClassBuildItem.builder(KnativeResource.class).methods().build());
     }
 
     @BuildStep

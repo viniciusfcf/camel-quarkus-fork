@@ -18,9 +18,8 @@ package org.apache.camel.quarkus.component.salesforce;
 
 import java.util.Optional;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Named;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.salesforce.AuthenticationType;
 import org.apache.camel.component.salesforce.SalesforceComponent;
@@ -80,13 +79,13 @@ public class SalesforceRoutes extends RouteBuilder {
             from("salesforce:subscribe:CamelTestTopic?notifyForFields=ALL&"
                     + "notifyForOperationCreate=true&notifyForOperationDelete=true&notifyForOperationUpdate=true&"
                     + "sObjectClass=" + Account.class.getName() + "&updateTopic=true&sObjectQuery=SELECT Id, Name FROM Account")
-                            .to("seda:CamelTestTopic");
+                    .to("seda:CamelTestTopic");
 
             // Streaming API : topic consumer with RAW Payload - getting json as String
             from("salesforce:subscribe:CamelTestTopic?rawPayload=true&notifyForFields=ALL&"
                     + "notifyForOperationCreate=true&notifyForOperationDelete=true&notifyForOperationUpdate=true&"
                     + "updateTopic=true&sObjectQuery=SELECT Id, Name FROM Account")
-                            .to("seda:RawPayloadCamelTestTopic");
+                    .to("seda:RawPayloadCamelTestTopic");
 
             // it takes some time for the subscriber to subscribe, so we'll try to
             // send repeated platform events and wait until the first one is

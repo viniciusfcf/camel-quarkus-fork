@@ -21,28 +21,28 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.camel.ConsumerTemplate;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.component.aws2.sqs.Sqs2Constants;
+import org.apache.camel.quarkus.test.support.aws2.BaseAws2Resource;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import software.amazon.awssdk.services.sqs.model.ListQueuesResponse;
 import software.amazon.awssdk.services.sqs.model.SendMessageBatchResponse;
 
 @Path("/aws2-sqs")
 @ApplicationScoped
-public class Aws2SqsResource {
+public class Aws2SqsResource extends BaseAws2Resource {
 
     @ConfigProperty(name = "aws-sqs.queue-name")
     String queueName;
@@ -52,6 +52,10 @@ public class Aws2SqsResource {
 
     @Inject
     ConsumerTemplate consumerTemplate;
+
+    public Aws2SqsResource() {
+        super("sqs");
+    }
 
     @Path("send")
     @POST
@@ -81,7 +85,7 @@ public class Aws2SqsResource {
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     public Response purgeQueue(@PathParam("queueName") String queueName) throws Exception {
-        producerTemplate.sendBody(componentUri(queueName) + "?operation=purgeQueue",
+        producerTemplate.sendBody(componentUri(queueName) + "&operation=purgeQueue",
                 null);
         return Response.ok().build();
     }
@@ -92,7 +96,7 @@ public class Aws2SqsResource {
     public String sqsReceive(@PathParam("queueName") String queueName, @PathParam("deleteMessage") String deleteMessage)
             throws Exception {
         return consumerTemplate.receiveBody(componentUri(queueName)
-                + "?deleteAfterRead=" + deleteMessage + "&deleteIfFiltered=" + deleteMessage + "&defaultVisibilityTimeout=0",
+                + "&deleteAfterRead=" + deleteMessage + "&deleteIfFiltered=" + deleteMessage + "&defaultVisibilityTimeout=0",
                 10000,
                 String.class);
     }
@@ -111,7 +115,7 @@ public class Aws2SqsResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<String> listQueues() throws Exception {
-        return producerTemplate.requestBody(componentUri() + "?operation=listQueues", null, ListQueuesResponse.class)
+        return producerTemplate.requestBody(componentUri() + "&operation=listQueues", null, ListQueuesResponse.class)
                 .queueUrls();
     }
 
@@ -121,7 +125,7 @@ public class Aws2SqsResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response sendBatchMessage(List<String> messages) throws Exception {
         final SendMessageBatchResponse response = producerTemplate.requestBody(
-                componentUri() + "?operation=sendBatchMessage",
+                componentUri() + "&operation=sendBatchMessage",
                 messages,
                 SendMessageBatchResponse.class);
         return Response
@@ -135,7 +139,7 @@ public class Aws2SqsResource {
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteMessage(@PathParam("queueName") String queueName, @PathParam("receipt") String receipt)
             throws Exception {
-        producerTemplate.sendBodyAndHeader(componentUri(queueName) + "?operation=deleteMessage",
+        producerTemplate.sendBodyAndHeader(componentUri(queueName) + "&operation=deleteMessage",
                 null,
                 Sqs2Constants.RECEIPT_HANDLE,
                 URLDecoder.decode(receipt, StandardCharsets.UTF_8));
@@ -146,33 +150,31 @@ public class Aws2SqsResource {
     @DELETE
     @Produces(MediaType.TEXT_PLAIN)
     public Response deleteQueue(@PathParam("queueName") String queueName) throws Exception {
-        producerTemplate.sendBody(componentUri(queueName) + "?operation=deleteQueue",
+        producerTemplate.sendBody(componentUri(queueName) + "&operation=deleteQueue",
                 null);
         return Response.ok().build();
     }
 
-    @Path("queue/autocreate/delayed/{queueName}/{delay}")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<String> autoCreateDelayedQueue(@PathParam("queueName") String queueName, @PathParam("delay") String delay)
-            throws Exception {
-        // queue creation without any operation resulted in 405 status code
-        String uri = String.format("aws2-sqs://%s?autoCreateQueue=true&delayQueue=true&delaySeconds=%s&operation=listQueues",
+    @Path("queue/autocreate/delayed/{queueName}/{delay}/{msg}")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    public String autoCreateDelayedQueue(@PathParam("queueName") String queueName, @PathParam("delay") String delay,
+            @PathParam("msg") String msg) {
+        String uri = String.format("aws2-sqs://%s?autoCreateQueue=true&delayQueue=true&delaySeconds=%s",
                 queueName, delay);
         return producerTemplate
                 .requestBody(
                         uri,
-                        null,
-                        ListQueuesResponse.class)
-                .queueUrls();
+                        msg,
+                        String.class);
     }
 
     private String componentUri() {
-        return "aws2-sqs://" + queueName;
+        return componentUri(queueName);
     }
 
     private String componentUri(String queueName) {
-        return "aws2-sqs://" + queueName;
+        return "aws2-sqs://" + queueName + "?useDefaultCredentialsProvider=" + isUseDefaultCredentials();
     }
 
 }

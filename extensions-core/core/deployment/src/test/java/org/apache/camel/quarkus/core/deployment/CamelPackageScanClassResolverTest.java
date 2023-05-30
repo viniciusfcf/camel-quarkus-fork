@@ -19,13 +19,12 @@ package org.apache.camel.quarkus.core.deployment;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
 import io.quarkus.builder.BuildChainBuilder;
 import io.quarkus.builder.BuildContext;
 import io.quarkus.builder.BuildStep;
 import io.quarkus.test.QuarkusUnitTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ExtendedCamelContext;
 import org.apache.camel.quarkus.core.deployment.spi.CamelPackageScanClassBuildItem;
@@ -65,8 +64,8 @@ public class CamelPackageScanClassResolverTest {
 
     @Test
     public void findImplementations() {
-        ExtendedCamelContext ecc = context.adapt(ExtendedCamelContext.class);
-        PackageScanClassResolver resolver = ecc.getPackageScanClassResolver();
+        ExtendedCamelContext ecc = context.getCamelContextExtension();
+        PackageScanClassResolver resolver = ecc.getContextPlugin(PackageScanClassResolver.class);
         Set<Class<?>> classes = resolver.findImplementations(Animal.class, Animal.class.getPackageName());
         assertNotNull(classes);
         assertEquals(2, classes.size());
@@ -76,8 +75,8 @@ public class CamelPackageScanClassResolverTest {
 
     @Test
     public void findByFilter() {
-        ExtendedCamelContext ecc = context.adapt(ExtendedCamelContext.class);
-        PackageScanClassResolver resolver = ecc.getPackageScanClassResolver();
+        ExtendedCamelContext ecc = context.getCamelContextExtension();
+        PackageScanClassResolver resolver = ecc.getContextPlugin(PackageScanClassResolver.class);
         Set<Class<?>> classes = resolver.findByFilter(Fungi.class::isAssignableFrom, Fungi.class.getPackageName());
         assertNotNull(classes);
         assertEquals(1, classes.size());
@@ -86,8 +85,8 @@ public class CamelPackageScanClassResolverTest {
 
     @Test
     public void findAnnotated() {
-        ExtendedCamelContext ecc = context.adapt(ExtendedCamelContext.class);
-        PackageScanClassResolver resolver = ecc.getPackageScanClassResolver();
+        ExtendedCamelContext ecc = context.getCamelContextExtension();
+        PackageScanClassResolver resolver = ecc.getContextPlugin(PackageScanClassResolver.class);
         Set<Class<?>> classes = resolver.findAnnotated(Singleton.class, Animal.class.getPackageName());
         assertNotNull(classes);
         assertEquals(1, classes.size());

@@ -17,18 +17,23 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-build-parent-it</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../../poms/build-parent-it/pom.xml</relativePath>
     </parent>
 
     <artifactId>camel-quarkus-integration-test-jdbc</artifactId>
     <name>Camel Quarkus :: Integration Tests :: JDBC</name>
     <description>Integration tests for Camel JDBC extension</description>
+
+    <properties>
+        <cq.jdbcKind>h2</cq.jdbcKind>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -40,12 +45,32 @@
             <artifactId>camel-quarkus-log</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-timer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-bean</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-resteasy</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jdbc-h2</artifactId>
+            <artifactId>quarkus-jdbc-${cq.jdbcKind}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-direct</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-resteasy-jsonb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel.quarkus</groupId>
+            <artifactId>camel-quarkus-mock</artifactId>
         </dependency>
 
         <!-- test dependencies -->
@@ -55,13 +80,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-test-h2</artifactId>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -91,6 +116,11 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <quarkus.test.arg-line>-Dcq.jdbcKind=${cq.jdbcKind}</quarkus.test.arg-line>
+                            </systemPropertyVariables>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -104,6 +134,19 @@
             </activation>
             <dependencies>
                 <!-- The following dependencies guarantee that this module is built after them. You can update them by running `mvn process-resources -Pformat -N` from the source tree root directory -->
+                <dependency>
+                    <groupId>org.apache.camel.quarkus</groupId>
+                    <artifactId>camel-quarkus-direct-deployment</artifactId>
+                    <version>${project.version}</version>
+                    <type>pom</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>*</groupId>
+                            <artifactId>*</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
                 <dependency>
                     <groupId>org.apache.camel.quarkus</groupId>
                     <artifactId>camel-quarkus-jdbc-deployment</artifactId>
@@ -120,6 +163,45 @@
                 <dependency>
                     <groupId>org.apache.camel.quarkus</groupId>
                     <artifactId>camel-quarkus-log-deployment</artifactId>
+                    <version>${project.version}</version>
+                    <type>pom</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>*</groupId>
+                            <artifactId>*</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.camel.quarkus</groupId>
+                    <artifactId>camel-quarkus-mock-deployment</artifactId>
+                    <version>${project.version}</version>
+                    <type>pom</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>*</groupId>
+                            <artifactId>*</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.camel.quarkus</groupId>
+                    <artifactId>camel-quarkus-timer-deployment</artifactId>
+                    <version>${project.version}</version>
+                    <type>pom</type>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>*</groupId>
+                            <artifactId>*</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.camel.quarkus</groupId>
+                    <artifactId>camel-quarkus-bean-deployment</artifactId>
                     <version>${project.version}</version>
                     <type>pom</type>
                     <scope>test</scope>

@@ -21,7 +21,6 @@ import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.quarkus.test.CamelQuarkusTestSupport;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.apache.camel.test.junit5.TestSupport.deleteDirectory;
@@ -30,7 +29,6 @@ import static org.apache.camel.test.junit5.TestSupport.deleteDirectory;
 public class IsMockEndpointsFileTest extends CamelQuarkusTestSupport {
 
     @Override
-    @BeforeEach
     public void setUp() throws Exception {
         deleteDirectory("target/input");
         deleteDirectory("target/messages");
@@ -57,7 +55,7 @@ public class IsMockEndpointsFileTest extends CamelQuarkusTestSupport {
         template.sendBodyAndHeader("file:target/input", "Hello Camel", Exchange.FILE_NAME, "camel.txt");
         template.sendBodyAndHeader("file:target/input", "Hello World", Exchange.FILE_NAME, "world.txt");
 
-        assertMockEndpointsSatisfied();
+        MockEndpoint.assertIsSatisfied(context);
     }
 
     @Override

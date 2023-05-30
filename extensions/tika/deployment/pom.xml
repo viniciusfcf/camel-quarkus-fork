@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-tika-parent</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -32,13 +32,7 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>
-	    <artifactId>camel-quarkus-core-deployment</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jsoup</groupId>
-                    <artifactId>jsoup</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>camel-quarkus-core-deployment</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.camel.quarkus</groupId>

@@ -22,13 +22,11 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.core.MediaType;
-
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.camel.dsl.xml.io.XmlRoutesBuilderLoader;
-import org.apache.camel.quarkus.core.DisabledXMLRoutesDefinitionLoader;
 import org.apache.camel.xml.jaxb.DefaultModelJAXBContextFactory;
 import org.apache.camel.xml.jaxb.JaxbModelToXMLDumper;
 import org.junit.jupiter.api.Test;
@@ -53,8 +51,6 @@ public class CoreMainXmlJaxbTest {
         assertThat(p.getString("xml-model-dumper")).isEqualTo(JaxbModelToXMLDumper.class.getName());
         assertThat(p.getString("xml-model-factory")).isEqualTo(DefaultModelJAXBContextFactory.class.getName());
 
-        assertThat(p.getString("xml-routes-definitions-loader"))
-                .isEqualTo(DisabledXMLRoutesDefinitionLoader.class.getName());
         assertThat(p.getString("xml-routes-builder-loader"))
                 .isEqualTo(XmlRoutesBuilderLoader.class.getName());
 

@@ -17,13 +17,15 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-poms</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -34,8 +36,9 @@
 
     <properties>
         <!-- This property is kept in sync with project.version by the release plugin -->
-        <!-- Do not change to project.version because otherwise the end user apps having our BOM as parent (rather than importing it) will stop working -->
-        <camel-quarkus.version>2.15.0-SNAPSHOT</camel-quarkus.version>
+        <!-- Do not change to project.version because otherwise the end user apps having our BOM as
+        parent (rather than importing it) will stop working -->
+        <camel-quarkus.version>3.0.0-SNAPSHOT</camel-quarkus.version>
     </properties>
 
     <dependencyManagement>
@@ -83,6 +86,38 @@
                 <groupId>org.apache.camel.quarkus</groupId>
                 <artifactId>camel-quarkus-integration-tests-support-aws2</artifactId>
                 <version>${camel-quarkus.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <artifactId>camel-quarkus-integration-test-support</artifactId>
+                        <groupId>org.apache.camel.quarkus</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>camel-quarkus-integration-test-support-mock-backend</artifactId>
+                        <groupId>org.apache.camel.quarkus</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>localstack</artifactId>
+                        <groupId>org.testcontainers</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>quarkus-junit4-mock</artifactId>
+                        <groupId>io.quarkus</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>rest-assured</artifactId>
+                        <groupId>io.rest-assured</groupId>
+                    </exclusion>
+                    <exclusion>
+                        <artifactId>aws-java-sdk-core</artifactId>
+                        <groupId>com.amazonaws</groupId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel.quarkus</groupId>
+                <artifactId>camel-quarkus-integration-tests-support-aws2</artifactId>
+                <version>${camel-quarkus.version}</version>
+                <type>test-jar</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.camel.quarkus</groupId>
@@ -119,7 +154,6 @@
                 <artifactId>camel-quarkus-integration-tests-process-executor-support</artifactId>
                 <version>${camel-quarkus.version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.camel.quarkus</groupId>
                 <artifactId>camel-quarkus-integration-tests-support-google</artifactId>
@@ -142,6 +176,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.camel.quarkus</groupId>
+                <artifactId>camel-quarkus-integration-tests-support-sql-derby</artifactId>
+                <version>${camel-quarkus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel.quarkus</groupId>
                 <artifactId>camel-quarkus-integration-wiremock-support</artifactId>
                 <version>${camel-quarkus.version}</version>
             </dependency>
@@ -151,6 +190,17 @@
                 <version>${camel-quarkus.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>org.apache.camel.quarkus</groupId>
+                <artifactId>camel-quarkus-integration-test-infinispan-common</artifactId>
+                <version>${camel-quarkus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel.quarkus</groupId>
+                <artifactId>camel-quarkus-integration-test-infinispan-common</artifactId>
+                <version>${camel-quarkus.version}</version>
+                <type>test-jar</type>
+            </dependency>
             <dependency>
                 <groupId>org.apache.camel.quarkus</groupId>
                 <artifactId>camel-quarkus-integration-test-messaging-common</artifactId>
@@ -200,30 +250,6 @@
                 <version>${pdfbox.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-testing-util</artifactId>
-                <version>${hbase.version}</version>
-                <scope>test</scope>
-                <exclusions>
-                    <exclusion>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.google.inject</groupId>
-                        <artifactId>guice</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.sun.xml.bind</groupId>
-                        <artifactId>jaxb-impl</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.glassfish.web</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.sshd</groupId>
                 <artifactId>sshd-sftp</artifactId>
                 <version>${sshd.version}</version>
@@ -246,6 +272,16 @@
                 </exclusions>
             </dependency>
             <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${hamcrest.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest-core</groupId>
+                <artifactId>hamcrest</artifactId>
+                <version>${hamcrest.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.knowm.xchange</groupId>
                 <artifactId>xchange-kraken</artifactId>
                 <version>${xchange.version}</version>
@@ -255,29 +291,14 @@
                         <artifactId>jsr305</artifactId>
                     </exclusion>
                     <exclusion>
-                        <groupId>jakarta.ws.rs</groupId>
-                        <artifactId>jakarta.ws.rs-api</artifactId>
-                    </exclusion>
-                    <exclusion>
                         <groupId>javax.annotation</groupId>
                         <artifactId>javax.annotation-api</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>org.jvnet.mock-javamail</groupId>
-                <artifactId>mock-javamail</artifactId>
-                <version>${mock-javamail.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>javax.mail</groupId>
-                        <artifactId>mail</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>com.github.tomakehurst</groupId>
-                <artifactId>wiremock-jre8</artifactId>
+                <artifactId>wiremock</artifactId>
                 <version>${wiremock.version}</version>
                 <exclusions>
                     <exclusion>
@@ -307,11 +328,6 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>jakarta.jws</groupId>
-                <artifactId>jakarta.jws-api</artifactId>
-                <version>${jakarta.jws.ws.api.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
                 <artifactId>htmlunit-driver</artifactId>
                 <version>${htmlunit-driver.version}</version>
@@ -325,8 +341,16 @@
                         <artifactId>httpmime</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>org.checkerframework</groupId>
+                        <artifactId>checker-qual</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>commons-logging</groupId>
                         <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>xml-apis</groupId>
+                        <artifactId>xml-apis</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -341,32 +365,6 @@
                 <version>${aws-java-sdk.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.azure</groupId>
-                <artifactId>azure-core</artifactId>
-                <version>${azure-core.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.azure</groupId>
-                <artifactId>azure-core-test</artifactId>
-                <version>${azure-core-test.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.azure</groupId>
-                <artifactId>azure-core-test</artifactId>
-                <version>${azure-core-test.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.icegreen</groupId>
-                <artifactId>greenmail</artifactId>
-                <version>${greenmail.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>jcache</artifactId>
                 <version>${caffeine.version}</version>
@@ -376,6 +374,12 @@
                         <artifactId>javax.inject</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.unboundid</groupId>
+                <artifactId>unboundid-ldapsdk</artifactId>
+                <version>${unboundid-ldapsdk.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

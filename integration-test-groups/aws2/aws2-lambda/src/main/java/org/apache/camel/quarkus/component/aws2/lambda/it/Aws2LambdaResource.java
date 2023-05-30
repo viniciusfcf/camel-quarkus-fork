@@ -22,26 +22,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.ext.Provider;
-
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.ext.Provider;
 import org.apache.camel.CamelExecutionException;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.component.aws2.lambda.Lambda2Constants;
 import org.apache.camel.component.aws2.lambda.Lambda2Operations;
+import org.apache.camel.quarkus.test.support.aws2.BaseAws2Resource;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import software.amazon.awssdk.core.SdkBytes;
@@ -66,7 +66,7 @@ import software.amazon.awssdk.services.lambda.model.UpdateFunctionCodeResponse;
 
 @Path("/aws2-lambda")
 @ApplicationScoped
-public class Aws2LambdaResource {
+public class Aws2LambdaResource extends BaseAws2Resource {
 
     private static final Logger LOG = Logger.getLogger(Aws2LambdaResource.class);
 
@@ -78,6 +78,10 @@ public class Aws2LambdaResource {
 
     @Inject
     ProducerTemplate producerTemplate;
+
+    public Aws2LambdaResource() {
+        super("lambda");
+    }
 
     @Path("/function/create/{functionName}")
     @POST
@@ -396,12 +400,13 @@ public class Aws2LambdaResource {
         }
     }
 
-    private static String componentUri(String functionName, Lambda2Operations operation) {
-        return "aws2-lambda:" + functionName + "?operation=" + operation;
+    private String componentUri(String functionName, Lambda2Operations operation) {
+        return "aws2-lambda:" + functionName + "?operation=" + operation + "&useDefaultCredentialsProvider="
+                + isUseDefaultCredentials();
     }
 
     @Provider
-    public static class ExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<CamelExecutionException> {
+    public static class ExceptionMapper implements jakarta.ws.rs.ext.ExceptionMapper<CamelExecutionException> {
         @Override
         public Response toResponse(CamelExecutionException exception) {
             if (exception.getCause() instanceof InvalidParameterValueException) {

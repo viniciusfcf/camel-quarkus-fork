@@ -31,6 +31,7 @@ on:
       - 'KEYS'
       - 'LICENSE.txt'
       - 'NOTICE.txt'
+      - 'camel-quarkus-sbom.*'
   pull_request:
     branches:
       - main
@@ -52,17 +53,75 @@ concurrency:
 env:
   LANG: en_US.UTF-8
   MAVEN_OPTS: -Xmx3000m
-  MAVEN_ARGS: -V -ntp -Dhttp.keepAlive=false -e
+  CQ_MAVEN_ARGS: -V -ntp -e -Daether.connector.http.connectionMaxTtl=120
   TESTCONTAINERS_RYUK_DISABLED: true
+  CHECKOUT_REF: ${{ github.event_name == 'pull_request' && github.actor == 'dependabot[bot]' && github.head_ref || '' }}
 
 jobs:
-  initial-mvn-install:
+  pre-build-checks:
     if: github.repository == 'apache/camel-quarkus'
     runs-on: ubuntu-latest
     outputs:
+      continue-build: ${{ steps.pre-build-checks.outputs.continue-build }}
+      run-checks: ${{ steps.init.outputs.run-checks }}
+    steps:
+      - name: Initialize
+        id: init
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]] && [[ "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "run-checks=true" >> $GITHUB_OUTPUT
+          else
+            echo "run-checks=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        if: steps.init.outputs.run-checks == 'true'
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Checkout
+        uses: actions/checkout@v2
+        if: steps.init.outputs.run-checks == 'true'
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
+      - name: Pre build checks
+        id: pre-build-checks
+        run: |
+          if [[ "${{ steps.init.outputs.run-checks }}" == "true" ]]; then
+            ./mvnw cq:sync-versions -N ${CQ_MAVEN_ARGS}
+            ./mvnw clean install -pl poms/bom -am -Dcq.flatten-bom.format --fail-never ${CQ_MAVEN_ARGS}
+            ./mvnw clean install -f poms/bom ${CQ_MAVEN_ARGS}
+
+            if [[ -z "$(git status --porcelain)" ]]; then
+              echo "continue-build=true" >> $GITHUB_OUTPUT
+            else
+              mkdir ./dependabot-pr
+              echo ${{ github.head_ref }} > ./dependabot-pr/BRANCH_REF
+              echo "$GITHUB_REF" | awk -F / '{print $3}' >  ./dependabot-pr/PR_NUMBER
+              git diff -p --binary > ./dependabot-pr/changes.patch
+
+              echo "continue-build=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "continue-build=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Upload dependabot changeset
+        uses: actions/upload-artifact@v2
+        if: steps.pre-build-checks.outputs.continue-build == 'false'
+        with:
+          name: dependabot-pr-changeset
+          path: dependabot-pr/
+          retention-days: 1
+
+  initial-mvn-install:
+    if: needs.pre-build-checks.outputs.continue-build == 'true'
+    runs-on: ubuntu-latest
+    needs: pre-build-checks
+    outputs:
       matrix: ${{ steps.set-native-matrix.outputs.matrix }}
     env:
-      MAVEN_OPTS: -Xmx4000m
+      MAVEN_OPTS: -Xmx4400m
     steps:
       - name: Check free space on disk
         run: |
@@ -75,26 +134,29 @@ jobs:
         if: github.ref == 'refs/heads/quarkus-main' || github.base_ref == 'quarkus-main'
         run: |
           echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - name: Build Quarkus
         if: github.ref == 'refs/heads/quarkus-main' || github.base_ref == 'quarkus-main'
         run: |
           git clone --depth 1 --branch main https://github.com/quarkusio/quarkus.git \
             && cd quarkus \
             && echo "Current Quarkus commit:" $(git rev-parse HEAD) \
-            && ./mvnw ${MAVEN_ARGS} clean install -Dquickly
+            && ./mvnw ${CQ_MAVEN_ARGS} clean install -Dquickly
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
       - name: mvn clean install -DskipTests
         run: |
-          eval ./mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} clean install -DskipTests -Dquarkus.build.skip
+          eval ./mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} clean install -DskipTests -Dquarkus.build.skip
       - name: Sync Maven properties
         run: |
-          ./mvnw cq:sync-versions ${MAVEN_ARGS} -N
+          ./mvnw cq:sync-versions ${CQ_MAVEN_ARGS} -N
       - name: Fail if there are uncommitted changes
         shell: bash
         run: |
@@ -136,11 +198,14 @@ jobs:
           echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up JDK 11
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - name: Download Maven Repo
         uses: actions/download-artifact@v2
         with:
@@ -161,7 +226,7 @@ jobs:
 
             MODULE="integration-tests/$(echo ${MODULE} | sed 's/^[ \t]*//;s/[ \t]*$//')"
 
-            if [[ "x$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=ci.native.tests.skip -DforceStdout -q -f ${MODULE})" == "xtrue" ]]; then
+            if [[ "x$(./mvnw org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=ci.native.tests.skip -DforceStdout -q -f ${MODULE})" == "xtrue" ]]; then
               JVM_MODULES+=("${MODULE}")
             else
               NATIVE_MODULES+=("${MODULE}")
@@ -175,14 +240,14 @@ jobs:
 
           IFS=,
           if [[ ${JVM_MODULES[@]} ]]; then
-            eval ./mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} clean test \
+            eval ./mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} clean test \
               -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
               -Pdocker,ci \
               -pl "${JVM_MODULES[*]}"
           fi
 
           if [[ ${NATIVE_MODULES[@]} ]]; then
-            eval ./mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} clean verify \
+            eval ./mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} clean verify \
               -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
               -Pnative,docker,ci \
               --fail-at-end \
@@ -208,12 +273,16 @@ jobs:
         if: github.ref == 'refs/heads/quarkus-main' || github.base_ref == 'quarkus-main'
         run: |
           echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - name: Download Maven Repo
         uses: actions/download-artifact@v2
         with:
@@ -228,31 +297,31 @@ jobs:
       - name: cd extensions-core && mvn test
         run: |
           cd extensions-core
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dformatter.skip -Dimpsort.skip -Denforcer.skip -Dcamel-quarkus.update-extension-doc-page.skip \
             test
       - name: cd extensions && mvn test
         run: |
           cd extensions
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dformatter.skip -Dimpsort.skip -Denforcer.skip -Dcamel-quarkus.update-extension-doc-page.skip \
             test
       - name: cd test-framework && mvn test
         run: |
           cd test-framework
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dformatter.skip -Dimpsort.skip -Denforcer.skip -Dcamel-quarkus.update-extension-doc-page.skip \
             test
       - name: cd tooling/perf-regression && mvn verify
         run: |
           cd tooling/perf-regression
-          ../../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
             verify
       - name: cd catalog && mvn test
         run: |
           cd catalog
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
             test
 
@@ -262,7 +331,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ '11', '17' ]
+        java: [ '17' ]
     env:
       MAVEN_OPTS: -Xmx3000m
     steps:
@@ -274,7 +343,11 @@ jobs:
         if: github.ref == 'refs/heads/quarkus-main' || github.base_ref == 'quarkus-main'
         run: |
           echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v2
         with:
@@ -301,58 +374,10 @@ jobs:
       - name: cd integration-tests-jvm && mvn clean test
         run: |
           cd integration-tests-jvm
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
             --fail-at-end \
             clean test
-
-  integration-tests-alternative-jdk:
-    runs-on: ubuntu-latest
-    needs: initial-mvn-install
-    if: github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'JVM')
-    env:
-      MAVEN_OPTS: -Xmx3000m
-    steps:
-      - name: Setup apache-snapshots profile
-        if: github.ref == 'refs/heads/camel-main' || github.base_ref == 'camel-main'
-        run: |
-          echo "BRANCH_OPTIONS=-Papache-snapshots" >> $GITHUB_ENV
-      - name: Setup oss-snapshots profile
-        if: github.ref == 'refs/heads/quarkus-main' || github.base_ref == 'quarkus-main'
-        run: |
-          echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
-      - name: Clean VM
-        run: |
-          echo "Removing unwanted SDKs"
-          sudo rm -rf /usr/local/lib/android \
-               rm -rf /usr/local/share/boost \
-               rm -rf /usr/local/go \
-               rm -rf /usr/share/dotnet \
-               rm -rf /usr/share/rust
-      - name: Set up JDK 17
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      - name: Download Maven Repo
-        uses: actions/download-artifact@v2
-        with:
-          name: maven-repo
-          path: ..
-      - name: Extract Maven Repo
-        shell: bash
-        run: |
-          df -h /
-          tar -xzf ../maven-repo.tgz -C ~
-          df -h /
-      - name: cd integration-tests && mvn clean verify
-        run: |
-          cd integration-tests
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
-            -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
-            --fail-at-end \
-            clean verify
 
   integration-tests-alternative-platform:
     runs-on: ${{ matrix.os }}
@@ -375,12 +400,16 @@ jobs:
         if: github.ref == 'refs/heads/quarkus-main' || github.base_ref == 'quarkus-main'
         run: |
           echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.CHECKOUT_REF }}
+          fetch-depth: 0
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - name: Download Maven Repo
         uses: actions/download-artifact@v2
         with:
@@ -394,7 +423,7 @@ jobs:
         shell: bash
         run: |
           cd integration-tests
-          ../mvnw ${MAVEN_ARGS} ${BRANCH_OPTIONS} \
+          ../mvnw ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} \
             -Dskip-testcontainers-tests -Dformatter.skip -Dimpsort.skip -Denforcer.skip \
             --fail-at-end \
             clean verify
@@ -414,11 +443,11 @@ jobs:
           echo "BRANCH_OPTIONS=-Poss-snapshots -Dquarkus.version=999-SNAPSHOT" >> $GITHUB_ENV
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
       - name: Download Maven Repo
         uses: actions/download-artifact@v2
         with:
@@ -431,17 +460,19 @@ jobs:
           tar -xzf ../maven-repo.tgz -C ~
           df -h /
       - name: set CQ_VERSION
-        run: echo "CQ_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+        run: echo "CQ_VERSION=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout -N)" >> $GITHUB_ENV
       - name: clone and verify examples
         run: |
           EXAMPLES_BRANCH="camel-quarkus-main"
 
           if [[ ${GITHUB_REF_NAME} =~ [0-9]+.[0-9]+.x ]]; then
               EXAMPLES_BRANCH=${GITHUB_REF_NAME}
+          elif [[ ${GITHUB_BASE_REF} =~ [0-9]+.[0-9]+.x ]]; then
+              EXAMPLES_BRANCH=${GITHUB_BASE_REF}
           fi
 
           git clone --depth 1 --branch ${EXAMPLES_BRANCH} https://github.com/apache/camel-quarkus-examples.git \
             && cd camel-quarkus-examples \
             && echo "Current Examples commit:" $(git rev-parse HEAD) \
-            && mvn ${MAVEN_ARGS} ${BRANCH_OPTIONS} org.l2x6.cq:cq-maven-plugin:2.10.0:examples-set-platform -Dcq.camel-quarkus.version=${CQ_VERSION} \
-            && ./mvnw-for-each.sh ${MAVEN_ARGS} ${BRANCH_OPTIONS} -Pnative,docker clean verify
+            && mvn ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} org.l2x6.cq:cq-maven-plugin:2.10.0:examples-set-platform -Dcq.camel-quarkus.version=${CQ_VERSION} \
+            && ./mvnw-for-each.sh ${CQ_MAVEN_ARGS} ${BRANCH_OPTIONS} -Pnative,docker clean verify

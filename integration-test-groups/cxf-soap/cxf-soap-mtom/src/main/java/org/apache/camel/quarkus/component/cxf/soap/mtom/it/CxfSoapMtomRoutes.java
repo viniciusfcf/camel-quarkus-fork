@@ -22,20 +22,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.activation.DataHandler;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-import javax.inject.Named;
 import javax.xml.transform.Source;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.ws.handler.Handler;
 import javax.xml.xpath.XPathConstants;
 
 import org.w3c.dom.Element;
 
 import com.sun.istack.ByteArrayDataSource;
 import io.quarkus.runtime.LaunchMode;
+import jakarta.activation.DataHandler;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.xml.ws.handler.Handler;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.attachment.AttachmentMessage;
@@ -254,42 +255,42 @@ public class CxfSoapMtomRoutes extends RouteBuilder {
     }
 
     @Produces
-    @ApplicationScoped
+    @SessionScoped
     @Named
     CxfEndpoint soapClientMtomEnabledEndpoint() {
         return commonCxfEndpoint(true, "");
     }
 
     @Produces
-    @ApplicationScoped
+    @SessionScoped
     @Named
     CxfEndpoint soapClientMtomDisabledEndpoint() {
         return commonCxfEndpoint(false, "");
     }
 
     @Produces
-    @ApplicationScoped
+    @SessionScoped
     @Named
     CxfEndpoint soapMtomDisabledServerPayloadModeEndpoint() {
         return commonCxfEndpoint(false, "/mtom-disabled-payload-mode-image-service");
     }
 
     @Produces
-    @ApplicationScoped
+    @SessionScoped
     @Named
     CxfEndpoint soapMtomEnabledServerPayloadModeEndpoint() {
         return commonCxfEndpoint(true, "/mtom-enabled-payload-mode-image-service");
     }
 
     @Produces
-    @ApplicationScoped
+    @SessionScoped
     @Named
     CxfEndpoint soapMtomEnabledServerPojoModeEndpoint() {
         return commonCxfEndpoint(true, "/mtom-enabled-pojo-mode-image-service");
     }
 
     @Produces
-    @ApplicationScoped
+    @SessionScoped
     @Named
     CxfEndpoint soapMtomDisabledServerPojoModeEndpoint() {
         return commonCxfEndpoint(false, "/mtom-disabled-pojo-mode-image-service");

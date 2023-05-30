@@ -57,7 +57,7 @@ class InfluxdbProcessor {
                 .sorted()
                 .toArray(String[]::new);
 
-        return new ReflectiveClassBuildItem(false, true, dtos);
+        return ReflectiveClassBuildItem.builder(dtos).fields().build();
     }
 
     @BuildStep

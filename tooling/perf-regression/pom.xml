@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.camel.quarkus</groupId>
         <artifactId>camel-quarkus-build-parent</artifactId>
-        <version>2.15.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
         <relativePath>../../poms/build-parent/pom.xml</relativePath>
     </parent>
 
@@ -56,6 +56,12 @@
                 <groupId>tech.tablesaw</groupId>
                 <artifactId>tablesaw-core</artifactId>
                 <version>${tablesaw.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.checkerframework</groupId>
+                        <artifactId>checker-qual</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.zeroturnaround</groupId>
@@ -109,6 +115,12 @@
             <groupId>org.apache.camel.quarkus</groupId>
             <artifactId>camel-quarkus-platform-http-deployment</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <build>

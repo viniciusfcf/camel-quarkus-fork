@@ -19,17 +19,15 @@ package org.apache.camel.quarkus.component.cxf.soap.securitypolicy.server.it;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.xml.ws.BindingProvider;
-
 import io.quarkiverse.cxf.test.QuarkusCxfClientTestUtil;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.config.RestAssuredConfig;
+import jakarta.xml.ws.BindingProvider;
 import org.apache.cxf.ws.security.SecurityConstants;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static io.quarkiverse.cxf.test.QuarkusCxfClientTestUtil.anyNs;
@@ -39,7 +37,6 @@ import static io.restassured.RestAssured.given;
 public class CxfWssSecurityPolicyServerTest {
 
     @Test
-    @Disabled("https://github.com/apache/camel-quarkus/issues/4291")
     void encrypetdSigned() throws IOException {
         WssSecurityPolicyHelloService client = getPlainClient();
 
@@ -52,14 +49,14 @@ public class CxfWssSecurityPolicyServerTest {
         ctx.put(SecurityConstants.ENCRYPT_PROPERTIES,
                 Thread.currentThread().getContextClassLoader().getResource("alice.properties"));
 
-        Assertions.assertThat(client.sayHello("foo")).isEqualTo("Secure Hello foo!");
+        Assertions.assertThat(client.sayHello("foo")).isEqualTo("Secure good morning foo");
     }
 
     @Test
     void noSecurityConfig() throws IOException {
         WssSecurityPolicyHelloService client = getPlainClient();
         /* Make sure that it fails properly when called without a password */
-        Assertions.assertThatExceptionOfType(javax.xml.ws.soap.SOAPFaultException.class)
+        Assertions.assertThatExceptionOfType(jakarta.xml.ws.soap.SOAPFaultException.class)
                 .isThrownBy(() -> client.sayHello("bar"))
                 .withMessage(
                         "A encryption username needs to be declared.");

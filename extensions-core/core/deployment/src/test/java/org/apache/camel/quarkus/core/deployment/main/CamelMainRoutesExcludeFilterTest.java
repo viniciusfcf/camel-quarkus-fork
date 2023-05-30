@@ -22,11 +22,10 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
-
 import io.quarkus.test.QuarkusUnitTest;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Route;
 import org.apache.camel.builder.RouteBuilder;
@@ -55,7 +54,8 @@ public class CamelMainRoutesExcludeFilterTest {
         Properties props = new Properties();
         props.setProperty("quarkus.banner.enabled", "false");
         props.setProperty("quarkus.camel.routes-discovery.enabled", "true");
-        props.setProperty("quarkus.camel.routes-discovery.exclude-patterns", "**/*Filtered,**/*Bean,**/*Producer");
+        props.setProperty("quarkus.camel.routes-discovery.exclude-patterns", "**/*Filtered");
+        props.setProperty("camel.main.javaRoutesExcludePattern", "**/*Bean,**/*Producer");
 
         try {
             props.store(writer, "");

@@ -19,8 +19,6 @@ package org.apache.camel.quarkus.component.fhir.deployment.dstu3;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.inject.Singleton;
-
 import ca.uhn.fhir.context.FhirContext;
 import io.quarkus.arc.deployment.SyntheticBeanBuildItem;
 import io.quarkus.deployment.annotations.BuildProducer;
@@ -29,6 +27,7 @@ import io.quarkus.deployment.annotations.ExecutionTime;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import jakarta.inject.Singleton;
 import org.apache.camel.quarkus.component.fhir.FhirContextRecorder;
 import org.apache.camel.quarkus.component.fhir.FhirFlags;
 import org.hl7.fhir.dstu3.model.Base;
@@ -80,8 +79,11 @@ public class FhirDstu3Processor {
         classes.add(Base.class.getName());
         classes.addAll(getModelClasses(propertiesBuildItem.getProperties()));
         classes.addAll(getInnerClasses(Enumerations.class.getName()));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true, Meta.class.getName()));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true, MetadataResource.class.getName()));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, classes.toArray(new String[0])));
+        reflectiveClass.produce(
+                ReflectiveClassBuildItem.builder(Meta.class.getName()).methods().fields().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(MetadataResource.class.getName())
+                .methods().fields().build());
+        reflectiveClass
+                .produce(ReflectiveClassBuildItem.builder(classes.toArray(new String[0])).build());
     }
 }

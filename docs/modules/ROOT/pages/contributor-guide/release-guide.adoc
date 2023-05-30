@@ -4,6 +4,8 @@
 The process is _mutatis mutandis_ the same as for the main Apache Camel repository - see the
 xref:manual::release-guide.adoc[Release guide] page of the Camel documentation.
 
+The process is oriented toward releasing the main branch, some adjustments might be needed when it come to releasing maintenance branches.
+
 Here, just a sketch of the repeating part, after you have performed the initial setup following the
 xref:manual::release-guide.adoc[Camel Release guide].
 
@@ -82,7 +84,7 @@ $ cd tooling/perf-regression
 $ java -jar target/quarkus-app/quarkus-run.jar -an 2.9.0 2.10.0
 ----
 
-After approximatively 1 hour, it should generate a report like below:
+After approximately 1 hour, it should generate a report like below:
 
 [source,shell]
 ----
@@ -110,6 +112,17 @@ $ cd tooling/perf-regression
 $ java -jar target/quarkus-app/quarkus-run.jar --help
 ----
 
+== Start an upstream vote
+
+Send a mail to start the upstream vote.
+There are plenty of mails on the dev mailing list to get inspiration from.
+For instance, one could search mail with subject below:
+
+[source,shell]
+----
+[VOTE] Release Camel Quarkus 3.0.0-M1
+----
+
 == Next version in Camel Quarkus main branch
 
 If there are no substantial commits in the release branch, which need to get merged/cherry-picked to `main`, you can
@@ -131,12 +144,30 @@ $ mvn release:update-versions -DautoVersionSubmodules=true -DdevelopmentVersion=
 $ sed -i "s|<camel.quarkus.jvmSince>[^<]*</camel.quarkus.jvmSince>|<camel.quarkus.jvmSince>$NEXT_RELEASE</camel.quarkus.jvmSince>|" tooling/create-extension-templates/runtime-pom.xml
 $ sed -i "s|<camel.quarkus.nativeSince>[^<]*</camel.quarkus.nativeSince>|<camel.quarkus.nativeSince>$NEXT_RELEASE</camel.quarkus.nativeSince>|" tooling/create-extension-templates/runtime-pom.xml
 $ mvn cq:sync-versions -N
-$ (cd extensions/qute && mvn clean install -Dquickly) # to regen the # Qute Camel component metadata
-$ mvn clean install -DskipTests -Dquarkus.build.skip # regenerate flattened boms
-$ git add -A
-$ git commit -m "Next is $NEXT_RELEASE"
+$ mvn clean install -Dquickly # to regen the Qute Camel component metadata + flattened boms
+$ git commit -am "Next is $NEXT_SNAPSHOT"
 # Send a pull request
 ----
+
+== Close the upstream vote
+
+After 72h, the vote may need to be closed.
+There are plenty of mails on the dev mailing list to get inspiration from.
+For instance, one could search mail with subject:
+
+[source,shell]
+----
+[Result][VOTE] Release Apache Camel Quarkus 3.0.0-M1
+----
+
+== Release the Apache staging repository after the vote
+
+* Login to the https://repository.apache.org[Apache staging repository] using your Apache LDAP credentials.
+* Click on `Staging Repositories`
+* Then select `org.apache.camel-quarkus-xxx` in the list of repositories, where `xxx` represents your `username` and `ip`
+* Click `Release` on the toolbar above
+* This will release the repository and make artifacts generally available
+* After that, a popup window is created, click `Close`
 
 == Update the Apache Camel Quarkus distribution subversion repository
 

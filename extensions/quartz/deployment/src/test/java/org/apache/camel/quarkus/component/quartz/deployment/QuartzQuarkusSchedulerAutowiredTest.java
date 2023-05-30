@@ -16,9 +16,8 @@
  */
 package org.apache.camel.quarkus.component.quartz.deployment;
 
-import javax.inject.Inject;
-
 import io.quarkus.test.QuarkusUnitTest;
+import jakarta.inject.Inject;
 import org.apache.camel.CamelContext;
 import org.apache.camel.component.quartz.QuartzComponent;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -26,7 +25,7 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QuartzQuarkusSchedulerAutowiredTest {
 
@@ -39,7 +38,7 @@ public class QuartzQuarkusSchedulerAutowiredTest {
     CamelContext context;
 
     @Test
-    public void test() throws Exception {
+    public void testQuarkusSchedulerAutowired() throws Exception {
         QuartzComponent component = context.getComponent("quartz", QuartzComponent.class);
         assertEquals("QuarkusQuartzScheduler", component.getScheduler().getSchedulerName());
     }

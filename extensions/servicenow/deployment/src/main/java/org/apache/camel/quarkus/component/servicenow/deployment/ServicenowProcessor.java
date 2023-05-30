@@ -61,10 +61,9 @@ class ServicenowProcessor {
                 .filter(className -> !className.startsWith("org.apache.camel.component.servicenow.model"))
                 .toArray(String[]::new);
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, true, serviceNowDtos));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(serviceNowDtos).fields().build());
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, true,
-                HTTPTransportFactory.class,
-                ServiceNowExceptionModel.class));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(HTTPTransportFactory.class,
+                ServiceNowExceptionModel.class).fields().build());
     }
 }
